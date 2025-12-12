@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 const config = {
   // what feilds to verify
   defaultVerificationFields: {
@@ -5,16 +8,15 @@ const config = {
     status: true,
     recipientName: true,
     date: false, //to checks weather the payment happend in the current month and year important to prevent fraud
-    accountNumber: true
+    accountNumber: true,
   },
 
   // expected data
   expectedData: {
-    expectedAmount: process.env.EXPECTED_AMOUNT || null,
-    expectedStatus: "Completed",
-    expectedRecipientName: process.env.EXPECTED_RECIPIENT_NAME || null,
-    expectedRecipientAccount: process.env.EXPECTED_RECIPIENT_ACCOUNT || null,
-    minAmount: null,
+    amount: process.env.EXPECTED_AMOUNT || null,
+    status: "Completed",
+    recipientName: process.env.EXPECTED_RECIPIENT_NAME || null,
+    accountNumber: process.env.EXPECTED_RECIPIENT_ACCOUNT || null,
   },
 
   //Validation rules (a wiggle room to tolerate inconsistancies)

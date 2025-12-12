@@ -10,74 +10,127 @@ const validatVerification = (rawHTML, defaultVerification, verify) => {
     return;
   }
 
+  const normalize = (str) => str.replace(/\s+/g, " ").trim().toLowerCase();
+
+  const findAdjacentValue = (labelText, scope = $) => {
+    const matcher = normalize(labelText);
+    const td = scope("td")
+      .filter((_, el) => normalize($(el).text()).includes(matcher))
+      .first();
+    if (!td.length) return "";
+    return td.next("td").text().replace(/\s+/g, " ").trim();
+  };
+
+  // In the invoice table, headers are on one row and the values are on the next row.
+  const findColumnValueFromHeader = (table, labelText) => {
+    const matcher = normalize(labelText);
+    const headerTd = table
+      .find("td")
+      .filter((_, el) => normalize($(el).text()).includes(matcher))
+      .first();
+    if (!headerTd.length) return "";
+    const headerRow = headerTd.closest("tr");
+    const colIdx = headerRow.find("td").index(headerTd);
+    const valueRow = headerRow.next("tr");
+    return valueRow.find("td").eq(colIdx).text().replace(/\s+/g, " ").trim();
+  };
+
+  const invoiceTable = $("table")
+    .filter(
+      (_, el) =>
+        $(el)
+          .find("td")
+          .filter((_, td) => normalize($(td).text()).includes("settled amount"))
+          .length > 0
+    )
+    .last();
+
+  const statusTable = $("table")
+    .filter(
+      (_, el) =>
+        $(el)
+          .find("td")
+          .filter((_, td) =>
+            normalize($(td).text()).includes("transaction status")
+          ).length > 0
+    )
+    .last();
+
   const accountAndName = $("#paid_reference_number").text();
   const parts = accountAndName.trim().split(/\s+/);
   const accountNumber = parts.shift();
-  const name = parts.join(" ");
+  const name = parts.join(" ").trim();
 
-  const amountLabel = $('td:contains("Settled Amount")');
-  const amountIndex = amountLabel.index();
-  const amountFromTable = amountLabel
-    .parent("tr")
-    .next("tr")
-    .find("td")
-    .eq(amountIndex)
-    .text()
-    .replace("Birr", "")
-    .trim();
+  const amountRaw = invoiceTable.length
+    ? findColumnValueFromHeader(invoiceTable, "Settled Amount")
+    : "";
+  const amountFromTable = amountRaw.replace(/Birr/i, "").trim();
 
-  const dateLabel = $('td:contains("Payment date")');
-  const dateIndex = dateLabel.index();
-  const date = dateLabel
-    .parent("tr")
-    .next("tr")
-    .find("td")
-    .eq(dateIndex)
-    .text()
-    .trim();
+  const date = invoiceTable.length
+    ? findColumnValueFromHeader(invoiceTable, "Payment date")
+    : "";
 
-  const status = $('td:contains("transaction status")')
-    .next("td")
-    .text()
-    .trim();
+  const status = statusTable.length
+    ? findAdjacentValue("transaction status", (sel) => statusTable.find(sel))
+    : "";
 
   const parsedData = {
     amount: amountFromTable,
-    status: status,
+    status,
     recipientName: name,
-    date: date,
-    accountNumber: accountNumber,
+    date,
+    accountNumber,
   };
 
-  if (defaultVerification) {
-    const defaultValues = config.defaultVerificationFields;
-    const expectedData = config.expectedData;
+  console.log(parsedData);
 
-    for (const key in defaultValues) {
-      if (defaultVerification[key]) {
-        const expected = expectedData[key];
-        const parsed = parsedData[key];
+  const verificationFlags =
+    defaultVerification && typeof defaultVerification === "object"
+      ? defaultVerification
+      : config.defaultVerificationFields;
 
-        if (expected === undefined) {
-          console.log(`No expected data for "${key}", skipping...`);
-          continue;
-        }
+  const expectedData = config.expectedData;
+  const { amountTolerance = 0 } = config.validation || {};
 
-        if (parsed === undefined) {
-          console.log(`No parsed data for "${key}", cannot verify`);
-          continue;
-        }
-
-        if (String(expected).trim() !== String(parsed).trim()) {
-          console.log(
-            `Mismatch on ${key}. Expected: ${expected}, Actual: ${parsed}`
-          );
-          return false;
-        }
-      }
+  const compareAmount = (expected, parsed) => {
+    const expectedNum = Number(expected);
+    const parsedNum = Number(parsed);
+    if (Number.isNaN(expectedNum) || Number.isNaN(parsedNum)) {
+      return String(expected).trim() === String(parsed).trim();
     }
-    return true;
+    return Math.abs(expectedNum - parsedNum) <= amountTolerance;
+  };
+
+  for (const key in verificationFlags) {
+    if (!verificationFlags[key]) continue;
+
+    const expected = expectedData[key];
+    const parsed = parsedData[key];
+
+    if (expected === undefined || expected === null) {
+      console.log(`No expected data for "${key}", failing verification.`);
+      return false;
+    }
+
+    if (parsed === undefined || parsed === null || parsed === "") {
+      console.log(`No parsed data for "${key}", failing verification.`);
+      return false;
+    }
+
+    const matches =
+      key === "amount"
+        ? compareAmount(expected, parsed)
+        : String(expected).trim() === String(parsed).trim();
+
+    if (!matches) {
+      console.log(
+        `Mismatch on ${key}. Expected: ${expected}, Actual: ${parsed}`
+      );
+      return false;
+    }
   }
+
+  return true;
 };
 
 export default validatVerification;
