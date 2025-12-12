@@ -76,21 +76,17 @@ const validatVerification = (rawHTML, defaultVerification, verify) => {
 
   const parsedData = {
     amount: amountFromTable,
-    status,
+    status: status,
     recipientName: name,
-    date,
-    accountNumber,
+    date: date,
+    accountNumber: accountNumber,
   };
 
   console.log(parsedData);
 
-  const verificationFlags =
-    defaultVerification && typeof defaultVerification === "object"
-      ? defaultVerification
-      : config.defaultVerificationFields;
+  const verificationFlags = config.defaultVerificationFields;
 
   const expectedData = config.expectedData;
-  const { amountTolerance = 0 } = config.validation || {};
 
   const compareAmount = (expected, parsed) => {
     const expectedNum = Number(expected);
@@ -98,11 +94,43 @@ const validatVerification = (rawHTML, defaultVerification, verify) => {
     if (Number.isNaN(expectedNum) || Number.isNaN(parsedNum)) {
       return String(expected).trim() === String(parsed).trim();
     }
-    return Math.abs(expectedNum - parsedNum) <= amountTolerance;
+    return expectedNum === parsedNum;
   };
 
   for (const key in verificationFlags) {
     if (!verificationFlags[key]) continue;
+
+    // Special handling for date - compare year and month only
+    if (key === "date") {
+      const parsed = parsedData[key];
+      if (!parsed) {
+        console.log(`No parsed data for "date", failing verification.`);
+        return false;
+      }
+      // Date format is "DD-MM-YYYY HH:MM:SS"
+      const [datePart] = parsed.split(" ");
+      const [day, month, year] = datePart.split("-");
+
+      if (
+        expectedData.paymentYear &&
+        year !== String(expectedData.paymentYear)
+      ) {
+        console.log(
+          `Year mismatch. Expected: ${expectedData.paymentYear}, Actual: ${year}`
+        );
+        return false;
+      }
+      if (
+        expectedData.paymentMonth &&
+        month !== String(expectedData.paymentMonth)
+      ) {
+        console.log(
+          `Month mismatch. Expected: ${expectedData.paymentMonth}, Actual: ${month}`
+        );
+        return false;
+      }
+      continue; // Date validated, move to next field
+    }
 
     const expected = expectedData[key];
     const parsed = parsedData[key];
