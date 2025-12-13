@@ -1,7 +1,7 @@
 import config from "../config/verification.config.js";
 import * as cheerio from "cheerio";
 
-const validatVerification = (rawHTML, defaultVerification, verify) => {
+const validatVerification = (rawHTML, defaultVerification) => {
   const $ = cheerio.load(rawHTML);
 
   const request = $("div").text();
@@ -21,7 +21,6 @@ const validatVerification = (rawHTML, defaultVerification, verify) => {
     return td.next("td").text().replace(/\s+/g, " ").trim();
   };
 
-  // In the invoice table, headers are on one row and the values are on the next row.
   const findColumnValueFromHeader = (table, labelText) => {
     const matcher = normalize(labelText);
     const headerTd = table
@@ -111,14 +110,12 @@ const validatVerification = (rawHTML, defaultVerification, verify) => {
   for (const key in verificationFlags) {
     if (!verificationFlags[key]) continue;
 
-    // Special handling for date - compare year and month only
     if (key === "date") {
       const parsed = parsedData[key];
       if (!parsed) {
         console.log(`No parsed data for "date", failing verification.`);
         return false;
       }
-      // Date format is "DD-MM-YYYY HH:MM:SS"
       const [datePart] = parsed.split(" ");
       const [day, month, year] = datePart.split("-");
 
@@ -140,7 +137,7 @@ const validatVerification = (rawHTML, defaultVerification, verify) => {
         );
         return false;
       }
-      continue; // Date validated, move to next field
+      continue;
     }
 
     const expected = expectedData[key];
