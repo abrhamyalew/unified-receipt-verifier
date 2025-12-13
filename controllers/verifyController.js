@@ -17,17 +17,20 @@ const getTellebirrReceipt = async (req, res) => {
 
     const validationResult = validationService(
       getRawReceiptData,
-      defaultVerification,
+      defaultVerification
     );
 
     if (validationResult) {
-      return res.json({ message: `The receipt ${ID} is valid.` });
+      return res
+        .status(200)
+        .json({ message: `The receipt '${ID}' is a valid receipt.` });
     } else {
-      return res.json({ message: `The receipt ${ID} is not valid.`});
+      return res.status(200).json({
+        message: `The receipt '${ID}' is not a valid receipt.`,
+      });
     }
   } catch (error) {
-    console.error("Error: ", error);
-    return res.status(400).json({ message: "Error: error validating receipt" });
+    return res.status(400).json({ error: error.message });
   }
 };
 

@@ -3,7 +3,7 @@ class AppError extends Error {
     super(message);
     this.name = this.constructor.name;
     this.status = status;
-    Error.captureStackTrace(this, this.constructor.name);
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -25,4 +25,4 @@ class ConnectionTimeOut extends AppError {
   }
 }
 
-export default { ValidationError, NotFoundError, ConnectionTimeOut };
+export { AppError, ValidationError, NotFoundError, ConnectionTimeOut };

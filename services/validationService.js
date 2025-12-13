@@ -1,4 +1,5 @@
 import config from "../config/verification.config.js";
+import { ValidationError } from "../utils/errorHandler.js";
 import * as cheerio from "cheerio";
 
 const validatVerification = (rawHTML, defaultVerification) => {
@@ -113,9 +114,9 @@ const validatVerification = (rawHTML, defaultVerification) => {
     if (key === "date") {
       const parsed = parsedData[key];
       if (!parsed) {
-        console.log(`No parsed data for "date", failing verification.`);
-        return false;
+        throw new ValidationError("No parsed data for date");
       }
+
       const [datePart] = parsed.split(" ");
       const [day, month, year] = datePart.split("-");
 
@@ -123,19 +124,17 @@ const validatVerification = (rawHTML, defaultVerification) => {
         expectedData.paymentYear &&
         year !== String(expectedData.paymentYear)
       ) {
-        console.log(
+        throw new ValidationError(
           `Year mismatch. Expected: ${expectedData.paymentYear}, Actual: ${year}`
         );
-        return false;
       }
       if (
         expectedData.paymentMonth &&
         month !== String(expectedData.paymentMonth)
       ) {
-        console.log(
+        throw new ValidationError(
           `Month mismatch. Expected: ${expectedData.paymentMonth}, Actual: ${month}`
         );
-        return false;
       }
       continue;
     }
@@ -144,13 +143,15 @@ const validatVerification = (rawHTML, defaultVerification) => {
     const parsed = parsedData[key];
 
     if (expected === undefined || expected === null) {
-      console.log(`No expected data for "${key}", failing verification.`);
-      return false;
+      throw new ValidationError(
+        `No expected data for "${key}", failing verification.`
+      );
     }
 
     if (parsed === undefined || parsed === null || parsed === "") {
-      console.log(`No parsed data for "${key}", failing verification.`);
-      return false;
+      throw new ValidationError(
+        `No parsed data for "${key}", failing verification.`
+      );
     }
 
     const matches =
@@ -159,10 +160,9 @@ const validatVerification = (rawHTML, defaultVerification) => {
         : String(expected).trim() === String(parsed).trim();
 
     if (!matches) {
-      console.log(
+      throw new ValidationError(
         `Mismatch on ${key}. Expected: ${expected}, Actual: ${parsed}`
       );
-      return false;
     }
   }
 
