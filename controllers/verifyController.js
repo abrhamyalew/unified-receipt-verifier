@@ -1,9 +1,8 @@
-import config from "../config/verification.config.js";
 import receiptParser from "../utils/receiptParser.js";
 import receiptService from "../services/receiptService.js";
 import validationService from "../services/validationService.js";
 
-const getTellebirrReceipt = async (req, res) => {
+const getTelebirrReceipt = async (req, res) => {
   try {
     const { receipt, defaultVerification } = req.body;
 
@@ -31,4 +30,4 @@ const getTellebirrReceipt = async (req, res) => {
   }
 };
 
-export default getTellebirrReceipt;
+export default getTelebirrReceipt;

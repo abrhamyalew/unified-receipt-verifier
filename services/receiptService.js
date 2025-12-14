@@ -1,7 +1,7 @@
 import config from "../config/verification.config.js";
 
 
-const getTellebirrReceipt = async (receiptId) => {
+const getTelebirrReceipt = async (receiptId) => {
   try {
     const { api } = config;
 
@@ -22,4 +22,4 @@ const getTellebirrReceipt = async (receiptId) => {
   }
 };
 
-export default getTellebirrReceipt;
+export default getTelebirrReceipt;
