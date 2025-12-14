@@ -1,5 +1,5 @@
 import config from "../config/verification.config.js";
-
+import { ConnectionTimeOut, NotFoundError } from "../utils/errorHandler.js";
 
 const getTelebirrReceipt = async (receiptId) => {
   try {
@@ -10,15 +10,20 @@ const getTelebirrReceipt = async (receiptId) => {
     const response = await fetch(FULL_API);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch receipt. Status: ${response.status}`);
+      throw new NotFoundError(
+        `Failed to fetch receipt. Status: ${response.status}`
+      );
     }
 
     const rawHTML = await response.text();
 
     return rawHTML;
   } catch (error) {
-    console.error("Receipt Service Error: ", error);
-    throw error;
+    if (error.status) {
+      throw error;
+    }
+
+    throw new ConnectionTimeOut(error.message);
   }
 };
 

@@ -82,7 +82,6 @@ const validatVerification = (rawHTML, defaultVerification) => {
     accountNumber: accountNumber,
   };
 
-  console.log(parsedData);
 
   let verificationFlags;
 
