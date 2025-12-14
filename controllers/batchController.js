@@ -19,28 +19,35 @@ const batchVerify = async (req, res) => {
 
     for (const element of receipt) {
       if (element) {
-        const getRawReceiptData = await receiptService(element);
+        try {
+          const getRawReceiptData = await receiptService(element);
 
-        const validationResult = validationService(
-          getRawReceiptData,
-          defaultVerification
-        );
+          const validationResult = validationService(
+            getRawReceiptData,
+            defaultVerification
+          );
 
-        if (validationResult) {
-          validReceipts.push(element);
-        } else {
-          failedReceipts.push(element);
+          if (validationResult) {
+            validReceipts.push(element);
+          } else {
+            failedReceipts.push({
+              receiptId: element,
+              error: "Validation failed",
+            });
+          }
+        } catch (error) {
+          failedReceipts.push({ receiptId: element, error: error.message });
         }
       }
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       result: validReceipts,
       summary: {
         total: receipt.length,
         valid: validReceipts.length,
-        invalid: receipt.length - validReceipts.length
-      } 
+        invalid: receipt.length - validReceipts.length,
+      },
     });
   } catch (error) {
     return res.status(error.status || 500).json({ error: error.message });
