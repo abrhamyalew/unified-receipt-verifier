@@ -39,6 +39,8 @@ const getTelebirrReceipt = async (req, res) => {
     ) {
       ID = cbeParser(trimedReceipt);
 
+      console.log(ID)
+
       if (!ID) return res.status(400).json({ error: "Invalid CBE Receipt ID" });
 
       getRawReceiptData = await getReceiptData(ID);
@@ -47,6 +49,8 @@ const getTelebirrReceipt = async (req, res) => {
         getRawReceiptData,
         defaultVerification
       );
+    }else {
+      throw new ValidationError(`receipt '${receipt}' is not a valid receipt`)
     }
 
     if (validationResult) {

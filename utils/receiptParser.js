@@ -22,24 +22,44 @@ export const telebirrParser = (input) => {
 };
 
 export const cbeParser = (input) => {
-  if (!input || typeof input !== "string") return null;
+  try {
+    if (!input || typeof input !== "string") return null;
 
-  //case1: if passes full url
-  const trimInput = input.trim();
-  let id;
+    const trimInput = input.trim();
 
-  if (trimInput.includes("https")) {
-    id = trimInput.split("/BranchReceipt/")[1];
-  } else {
-    id = trimInput;
+    const link = new URL(trimInput);
+
+    if (link.searchParams.toString()) {
+      const url = link.searchParams.get("id");
+
+      const trimInput = url.trim();
+
+      const pattern = /^[A-Z0-9]{12}\d{8}$/;
+
+      if (pattern.test(trimInput)) {
+        return trimInput;
+      }
+
+      return null;
+    } else {
+      const trimInput = input.trim();
+      let id;
+
+      if (trimInput.includes("https")) {
+        id = trimInput.split("/BranchReceipt/")[1];
+      } else {
+        id = trimInput;
+      }
+
+      const pattern = /^[A-Z0-9]{12}&\d{8}$/;
+
+      if (pattern.test(id)) {
+        return id;
+      }
+
+      return null;
+    }
+  } catch (error) {
+    console.error(error)
   }
-
-  //case2: if they paste only the receipt
-  const pattern = /^[A-Z0-9]{12}\d{8}$/;
-
-  if (pattern.test(id)) {
-    return id;
-  }
-
-  return null;
 };
