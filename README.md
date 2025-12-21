@@ -4,6 +4,13 @@ Verify Telebirr payment receipts against your expected transaction details. This
 
 Ideal for startup SaaS applications that need a simple, reliable way to verify payments just clone or integrate the code into your project and start using it immediately.
 
+## Currently supported Banks and wallets
+
+**✓ Telebirr ✓CBE**
+
+**And more on the way**
+
+
 ## Setup
 
 ```bash
@@ -25,19 +32,25 @@ EXPECTED_STATUS=Completed
 
 **Ensure that all expected data matches the receipt exactly in format and content.**
 
-Run it:
+### CBE Receipt Configuration
 
-```bash
-node server.js
+Add these variables to your `.env` for CBE verification:
+
+```env
+CBE_EXPECTED_AMOUNT=40
+CBE_EXPECTED_RECIPIENT_ACCOUNT=1****3717
+CBE_EXPECTED_RECIPIENT_NAME=ABRHAM YALEW
+CBE_EXPECTED_PAYMENT_YEAR=2025
+CBE_EXPECTED_PAYMENT_MONTH=12
 ```
 
 ## API Usage
 
 **POST** `http://localhost:5000/api/verify`
 
-### Option 1: Use default verification (checks all fields)
+### 1. Telebirr Verification
 
-Pass `defaultVerification: true` to use all fields from your config:
+You can use the receipt ID or full URL:
 
 ```json
 {
@@ -46,25 +59,37 @@ Pass `defaultVerification: true` to use all fields from your config:
 }
 ```
 
-Or use the full URL:
+### 2. CBE Verification
+
+Supports both query-param based and path-based URLs, as well as standalone IDs.
+
+**Option A: Using Receipt ID**
 
 ```json
 {
-  "receipt": "https://transactioninfo.ethiotelecom.et/receipt/CJP9OSP9U",
+  "receipt": "FT253523LQF089873717",
   "defaultVerification": true
 }
 ```
 
-### Option 2: Custom field selection
-
-Choose which fields to verify:
+**Option B: Using Full URL**
 
 ```json
 {
-  "receipt": "CJP9OSP9U",
+  "receipt": "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&89873717",
+  "defaultVerification": true
+}
+```
+
+### 3. Custom Field Verification
+
+Select specific fields to verify for any receipt type:
+
+```json
+{
+  "receipt": "FT253523LQF089873717",
   "defaultVerification": {
     "amount": true,
-    "status": true,
     "recipientName": true,
     "date": true,
     "accountNumber": true
@@ -72,16 +97,20 @@ Choose which fields to verify:
 }
 ```
 
-Set any field to `false` to skip its verification.
+_Note: `status` verification is skipped for CBE receipts as it's not explicitly present._
 
 ## Batch Receipt Verification
-The flexability that you get when using single receipt verification also comes with the batch verification.  
+
+verify multiple Telebirr and CBE receipts in a single request.
 
 **Request:**
 
 ```json
 {
-  "receipt": ["CJP9OSP9U", "ABC1234567"],
+  "receipt": [
+    "FT253523LQF089873717",
+    "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&89873717"
+  ],
   "defaultVerification": true
 }
 ```
@@ -90,10 +119,16 @@ The flexability that you get when using single receipt verification also comes w
 
 ```json
 {
-  "result": ["CJP9OSP9U", "ABC1234567", "I12345QWER"],
+  "result": ["FT25299FRPWD&89873717", "FT253523LQF089873717"],
+  "failed": [
+    {
+      "receiptId": "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&89873717",
+      "error": "Mismatch on amount. Expected: 30.00, Actual: 40.00"
+    }
+  ],
   "summary": {
-    "total": 3,
-    "valid": 2,
+    "total": 2,
+    "valid": 1,
     "invalid": 1
   }
 }
@@ -121,22 +156,12 @@ Edit `config/verification.config.js` to change defaults.
 }
 ```
 
-**Receipt not found:**
-
-```json
-{
-  "error": "Receipt not found or invalid"
-}
-```
-
 ## Fields You Can Verify
 
 | Field           | What it checks                          |
 | --------------- | --------------------------------------- |
 | `amount`        | Payment amount matches                  |
-| `status`        | Transaction status (e.g., "Completed")  |
+| `status`        | Transaction status (Telebirr only)      |
 | `recipientName` | Recipient name matches                  |
 | `accountNumber` | Recipient account number                |
 | `date`          | Payment happened in expected year/month |
-
-
