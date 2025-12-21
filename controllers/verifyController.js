@@ -19,7 +19,7 @@ const getTelebirrReceipt = async (req, res) => {
     let ID, getRawReceiptData, validationResult;
 
     if (
-      trimedReceipt.toLowerCase().includes("telebirr") ||
+      trimedReceipt.toLowerCase().includes("ethiotelecom") ||
       /^[A-Z0-9]{10}$/.test(trimedReceipt)
     ) {
       ID = telebirrParser(trimedReceipt);
@@ -35,22 +35,20 @@ const getTelebirrReceipt = async (req, res) => {
       );
     } else if (
       trimedReceipt.toLowerCase().includes("cbe") ||
-      /^[A-Z0-9]{12}\d{8}$/.test(trimedReceipt)
+      /^[A-Z0-9]{12}\d{8}$/.test(trimedReceipt) || /^[A-Z0-9]{12}&\d{8}$/.test(trimedReceipt)
     ) {
       ID = cbeParser(trimedReceipt);
-
-      console.log(ID)
 
       if (!ID) return res.status(400).json({ error: "Invalid CBE Receipt ID" });
 
       getRawReceiptData = await getReceiptData(ID);
 
-      validationResult = cbeVerification(
+      validationResult = await cbeVerification(
         getRawReceiptData,
         defaultVerification
       );
-    }else {
-      throw new ValidationError(`receipt '${receipt}' is not a valid receipt`)
+    } else {
+      throw new ValidationError(`receipt '${receipt}' is NOT a valid receipt`);
     }
 
     if (validationResult) {

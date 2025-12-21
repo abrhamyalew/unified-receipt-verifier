@@ -6,7 +6,6 @@ const config = {
     // what feilds to verify
     defaultVerificationFields: {
       amount: true,
-      status: true,
       recipientName: true,
       date: true, //to checks weather the payment happend in the current month and year important to prevent fraud
       accountNumber: true,
@@ -15,7 +14,6 @@ const config = {
     // expected data
     expectedData: {
       amount: process.env.CBE_EXPECTED_AMOUNT || null,
-      status: process.env.CBE_EXPECTED_STATUS || null,
       recipientName: process.env.CBE_EXPECTED_RECIPIENT_NAME || null,
       accountNumber: process.env.CBE_EXPECTED_RECIPIENT_ACCOUNT || null,
       paymentYear: process.env.CBE_EXPECTED_PAYMENT_YEAR || null,
