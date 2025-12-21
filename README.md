@@ -38,7 +38,7 @@ Add these variables to your `.env` for CBE verification:
 
 ```env
 CBE_EXPECTED_AMOUNT=40
-CBE_EXPECTED_RECIPIENT_ACCOUNT=1****3717
+CBE_EXPECTED_RECIPIENT_ACCOUNT=1****1234
 CBE_EXPECTED_RECIPIENT_NAME=ABRHAM YALEW
 CBE_EXPECTED_PAYMENT_YEAR=2025
 CBE_EXPECTED_PAYMENT_MONTH=12
@@ -54,7 +54,7 @@ You can use the receipt ID or full URL:
 
 ```json
 {
-  "receipt": "CJP9OSP9U",
+  "receipt": "CJP9OSW9U",
   "defaultVerification": true
 }
 ```
@@ -67,7 +67,7 @@ Supports both query-param based and path-based URLs, as well as standalone IDs.
 
 ```json
 {
-  "receipt": "FT253523LQF089873717",
+  "receipt": "FT253183LQF089873517",
   "defaultVerification": true
 }
 ```
@@ -76,7 +76,7 @@ Supports both query-param based and path-based URLs, as well as standalone IDs.
 
 ```json
 {
-  "receipt": "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&89873717",
+  "receipt": "https://apps.cbe.com.et:100/BranchReceipt/FT25292FRPWD&89873717",
   "defaultVerification": true
 }
 ```
@@ -87,7 +87,7 @@ Select specific fields to verify for any receipt type:
 
 ```json
 {
-  "receipt": "FT253523LQF089873717",
+  "receipt": "FT253W23LQF089173717",
   "defaultVerification": {
     "amount": true,
     "recipientName": true,
@@ -108,8 +108,8 @@ verify multiple Telebirr and CBE receipts in a single request.
 ```json
 {
   "receipt": [
-    "FT253523LQF089873717",
-    "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&89873717"
+    "FT253523LQF089573717",
+    "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&85873717"
   ],
   "defaultVerification": true
 }
@@ -119,10 +119,10 @@ verify multiple Telebirr and CBE receipts in a single request.
 
 ```json
 {
-  "result": ["FT25299FRPWD&89873717", "FT253523LQF089873717"],
+  "result": ["FT25R99FRPWD&89843717", "FT253Y23LQF789873717"],
   "failed": [
     {
-      "receiptId": "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&89873717",
+      "receiptId": "https://apps.cbe.com.et:100/BranchReceipt/FT25235FRPWD&89873717",
       "error": "Mismatch on amount. Expected: 30.00, Actual: 40.00"
     }
   ],
@@ -144,7 +144,7 @@ Edit `config/verification.config.js` to change defaults.
 
 ```json
 {
-  "message": "The receipt 'CJP9OSP9U' is a valid receipt."
+  "message": "The receipt 'CJP9OSP9W' is a valid receipt."
 }
 ```
 
