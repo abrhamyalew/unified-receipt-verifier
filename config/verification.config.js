@@ -3,11 +3,11 @@ dotenv.config();
 
 const config = {
   cbe: {
-    // what feilds to verify
+    // what fields to verify
     defaultVerificationFields: {
       amount: true,
       recipientName: true,
-      date: true, //to checks weather the payment happend in the current month and year important to prevent fraud
+      date: true, //to checks whether the payment happend in the current month and year important to prevent fraud
       accountNumber: true,
     },
 
@@ -36,38 +36,41 @@ const config = {
     },
   },
 
-  // what feilds to verify
-  defaultVerificationFields: {
-    amount: true,
-    status: true,
-    recipientName: true,
-    date: true, //to checks weather the payment happend in the current month and year important to prevent fraud
-    accountNumber: true,
+  telebirr: {
+    // what feilds to verify
+    defaultVerificationFields: {
+      amount: true,
+      status: true,
+      recipientName: true,
+      date: true, //to checks weather the payment happend in the current month and year important to prevent fraud
+      accountNumber: true,
+    },
+
+    // expected data
+    expectedData: {
+      amount: process.env.TELEBIRR_EXPECTED_AMOUNT || null,
+      status: process.env.TELEBIRR_EXPECTED_STATUS || null,
+      recipientName: process.env.TELEBIRR_EXPECTED_RECIPIENT_NAME || null,
+      accountNumber: process.env.TELEBIRR_EXPECTED_RECIPIENT_ACCOUNT || null,
+      paymentYear: process.env.TELEBIRR_EXPECTED_PAYMENT_YEAR || null,
+      paymentMonth: process.env.TELEBIRR_EXPECTED_PAYMENT_MONTH || null,
+    },
+    //Validation rules (a wiggle room to tolerate inconsistencies)
+    validation: {
+      amountTolerance: 0, // Must be exact amount
+      nameCaseSensitive: false,
+      allowPartialNameMatch: true,
+    },
+
+    //API setting
+    api: {
+      telebirrBaseUrl: "https://transactioninfo.ethiotelecom.et/receipt/",
+      timeout: 5000,
+      retries: 3,
+    },
   },
 
-  // expected data
-  expectedData: {
-    amount: process.env.EXPECTED_AMOUNT || null,
-    status: process.env.EXPECTED_STATUS || null,
-    recipientName: process.env.EXPECTED_RECIPIENT_NAME || null,
-    accountNumber: process.env.EXPECTED_RECIPIENT_ACCOUNT || null,
-    paymentYear: process.env.EXPECTED_PAYMENT_YEAR || null,
-    paymentMonth: process.env.EXPECTED_PAYMENT_MONTH || null,
-  },
-
-  //Validation rules (a wiggle room to tolerate inconsistancies)
-  validation: {
-    amountTolerance: 0, // Must be exact ammount
-    nameCaseSensitive: false,
-    allowPartialNameMatch: true,
-  },
-
-  //API setting
-  api: {
-    telebirrBaseUrl: "https://transactioninfo.ethiotelecom.et/receipt/",
-    timeout: 5000,
-    retries: 3,
-  },
+  BankO,
 };
 
 export default config;

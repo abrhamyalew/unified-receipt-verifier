@@ -4,7 +4,7 @@ import { ConnectionTimeOut, NotFoundError } from "../utils/errorHandler.js";
 export const getReceiptData = async (receiptId) => {
   try {
     if (/^[A-Z0-9]{10}$/.test(receiptId)) {
-      const FULL_API = config?.api?.telebirrBaseUrl + receiptId;
+      const FULL_API = config?.telebirr?.api?.telebirrBaseUrl + receiptId;
 
       const response = await fetch(FULL_API);
 
