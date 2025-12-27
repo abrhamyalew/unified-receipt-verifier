@@ -284,3 +284,7 @@ export const cbeVerification = async (pdfResponse, defaultVerification) => {
 
   return true;
 };
+
+export const boaVerification = async (parsedData, defaultVerification) => {
+  console.log(parsedData);
+};

@@ -38,6 +38,21 @@ export const getReceiptData = async (receiptId) => {
       }
 
       return response;
+    } else if (/^FT\d{5}[A-Z0-9]{5}\d{5}$/.test(receiptId)) {
+      const FULL_API = config?.BOA?.api?.boaBaseUrl + receiptId;
+
+      const response = await fetch(FULL_API);
+
+      console.log(response);
+
+      if (!response.ok) {
+        throw new NotFoundError(
+          `Failed to fetch receipt. Status: ${response.status}`
+        );
+      }
+
+      const parsedResponse = await response.json();
+      return parsedResponse;
     }
   } catch (error) {
     if (error.status) {

@@ -1,11 +1,15 @@
-import { telebirrParser, cbeParser } from "../utils/receiptParser.js";
+import {
+  telebirrParser,
+  cbeParser,
+  boaParser,
+} from "../utils/receiptParser.js";
 import { getReceiptData } from "../services/receiptService.js";
 import {
   telebirrVerification,
   cbeVerification,
+  boaVerification,
 } from "../services/validationService.js";
 import { ValidationError } from "../utils/errorHandler.js";
-
 
 const getTelebirrReceipt = async (req, res) => {
   try {
@@ -35,7 +39,8 @@ const getTelebirrReceipt = async (req, res) => {
       );
     } else if (
       trimedReceipt.toLowerCase().includes("cbe") ||
-      /^[A-Z0-9]{12}\d{8}$/.test(trimedReceipt) || /^[A-Z0-9]{12}&\d{8}$/.test(trimedReceipt)
+      /^[A-Z0-9]{12}\d{8}$/.test(trimedReceipt) ||
+      /^[A-Z0-9]{12}&\d{8}$/.test(trimedReceipt)
     ) {
       ID = cbeParser(trimedReceipt);
 
@@ -44,6 +49,22 @@ const getTelebirrReceipt = async (req, res) => {
       getRawReceiptData = await getReceiptData(ID);
 
       validationResult = await cbeVerification(
+        getRawReceiptData,
+        defaultVerification
+      );
+    } else if (
+      trimedReceipt.toLowerCase().includes("bankofabyssinia") ||
+      /^FT\d{5}[A-Z0-9]{5}\d{5}$/.test(trimedReceipt)
+    ) {
+      ID = boaParser(trimedReceipt);
+
+      console.log(ID);
+
+      if (!ID) return res.status(400).json({ error: "Invalid BOA Receipt ID" });
+
+      getRawReceiptData = await getReceiptData(ID);
+
+      validationResult = await boaVerification(
         getRawReceiptData,
         defaultVerification
       );

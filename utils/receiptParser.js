@@ -74,3 +74,33 @@ export const cbeParser = (input) => {
     return null;
   }
 };
+
+export const boaParser = (input) => {
+  try {
+    if (!input || typeof input !== "string") return null;
+
+    const trimInput = input.trim();
+
+    const link = new URL(trimInput);
+
+    const receiptNumber = link.searchParams.get("trx");
+
+    const pattern = /^FT\d{5}[A-Z0-9]{5}\d{5}$/;
+
+    if (receiptNumber && pattern.test(receiptNumber)) {
+      return receiptNumber;
+    }
+
+    return null;
+  } catch (error) {
+    // Handle plain receipt ID input (non-URL)
+    const trimInput = input.trim();
+    const pattern = /^FT\d{5}[A-Z0-9]{5}\d{5}$/;
+
+    if (pattern.test(trimInput)) {
+      return trimInput;
+    }
+
+    return null;
+  }
+};

@@ -20,7 +20,7 @@ const config = {
       paymentMonth: process.env.CBE_EXPECTED_PAYMENT_MONTH || null,
     },
 
-    //Validation rules (a wiggle room to tolerate inconsistancies)
+    //Validation rules (a wiggle room to tolerate inconsistencies)
     validation: {
       amountTolerance: 0, // Must be exact ammount
       nameCaseSensitive: false,
@@ -37,12 +37,12 @@ const config = {
   },
 
   telebirr: {
-    // what feilds to verify
+    // what fields to verify
     defaultVerificationFields: {
       amount: true,
       status: true,
       recipientName: true,
-      date: true, //to checks weather the payment happend in the current month and year important to prevent fraud
+      date: true, //to checks wheather the payment happend in the current month and year important to prevent fraud
       accountNumber: true,
     },
 
@@ -70,7 +70,39 @@ const config = {
     },
   },
 
-  BankO,
+  BOA: {
+    // what fields to verify
+    defaultVerificationFields: {
+      amount: true,
+      status: true,
+      recipientName: true,
+      date: true, //to checks wheather the payment happend in the current month and year important to prevent fraud
+      accountNumber: true,
+    },
+
+    // expected data
+    expectedData: {
+      amount: process.env.BOA_EXPECTED_AMOUNT || null,
+      status: process.env.BOA_EXPECTED_STATUS || null,
+      recipientName: process.env.BOA_EXPECTED_RECIPIENT_NAME || null,
+      accountNumber: process.env.BOA_EXPECTED_RECIPIENT_ACCOUNT || null,
+      paymentYear: process.env.BOA_EXPECTED_PAYMENT_YEAR || null,
+      paymentMonth: process.env.BOA_EXPECTED_PAYMENT_MONTH || null,
+    },
+    //Validation rules (a wiggle room to tolerate inconsistencies)
+    validation: {
+      amountTolerance: 0, // Must be exact amount
+      nameCaseSensitive: false,
+      allowPartialNameMatch: true,
+    },
+
+    //API setting
+    api: {
+      boaBaseUrl: "https://cs.bankofabyssinia.com/api/onlineSlip/getDetails/?id=",
+      timeout: 5000,
+      retries: 3,
+    },
+  },
 };
 
 export default config;
