@@ -88,17 +88,17 @@ export const telebirrVerification = (rawHTML, defaultVerification) => {
   let verificationFlags;
 
   if (defaultVerification === true) {
-    verificationFlags = config.defaultVerificationFields;
+    verificationFlags = config.telebirr.defaultVerificationFields;
   } else if (
     typeof defaultVerification === "object" &&
     defaultVerification !== null
   ) {
     verificationFlags = defaultVerification;
   } else {
-    verificationFlags = config.defaultVerificationFields;
+    verificationFlags = config.telebirr.defaultVerificationFields;
   }
 
-  const expectedData = config.expectedData;
+  const expectedData = config.telebirr.expectedData;
 
   const compareAmount = (expected, parsed) => {
     const expectedNum = Number(expected);
