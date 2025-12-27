@@ -84,8 +84,8 @@ const batchVerify = async (req, res) => {
     }
 
     return res.status(200).json({
-      result: validReceipts,
-      failed: failedReceipts,
+      validReceipts: validReceipts,
+      failedReceipts: failedReceipts,
       summary: {
         total: receipt.length,
         valid: validReceipts.length,

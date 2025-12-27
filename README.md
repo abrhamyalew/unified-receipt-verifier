@@ -1,15 +1,14 @@
-# Telebirr Payment Verifier
+# Ethiopian Payment Receipt Verifier
 
-Verify Telebirr payment receipts against your expected transaction details. This is useful for automating payment verification in e-commerce platforms, subscription services, or any system that accepts Telebirr payments.
+Verify payment receipts from Telebirr, CBE, and Bank of Abyssinia against your expected transaction details. This is useful for automating payment verification in e-commerce platforms, subscription services, or any system that accepts Ethiopian digital payments.
 
 Ideal for startup SaaS applications that need a simple, reliable way to verify payments just clone or integrate the code into your project and start using it immediately.
 
-## Currently supported Banks and wallets
+## Currently Supported Banks and Wallets
 
-**✓ Telebirr ✓CBE**
+**✓ Telebirr** | **✓ CBE (Commercial Bank of Ethiopia)** | **✓ BOA (Bank of Abyssinia)**
 
-**And more on the way**
-
+**More coming soon!**
 
 ## Setup
 
@@ -21,13 +20,15 @@ npm install
 
 Create `.env` with your expected payment details:
 
+### Telebirr Configuration
+
 ```env
 TELEBIRR_EXPECTED_AMOUNT=100
-TELEBIRR_EXPECTED_STATUS=Completed
-TELEBIRR_EXPECTED_RECIPIENT_NAME=Abrham Yalew
 TELEBIRR_EXPECTED_RECIPIENT_ACCOUNT=1000123456789
+TELEBIRR_EXPECTED_RECIPIENT_NAME=Abrham Yalew
 TELEBIRR_EXPECTED_PAYMENT_YEAR=2025
 TELEBIRR_EXPECTED_PAYMENT_MONTH=12
+TELEBIRR_EXPECTED_STATUS=Completed
 ```
 
 **Ensure that all expected data matches the receipt exactly in format and content.**
@@ -42,6 +43,18 @@ CBE_EXPECTED_RECIPIENT_ACCOUNT=1****1234
 CBE_EXPECTED_RECIPIENT_NAME=ABRHAM YALEW
 CBE_EXPECTED_PAYMENT_YEAR=2025
 CBE_EXPECTED_PAYMENT_MONTH=12
+```
+
+### BOA (Bank of Abyssinia) Configuration
+
+Add these variables to your `.env` for BOA verification:
+
+```env
+BOA_EXPECTED_AMOUNT=200
+BOA_EXPECTED_RECIPIENT_ACCOUNT=1******95
+BOA_EXPECTED_RECIPIENT_NAME=TEWODROS HULGIZIE TEMESGEN
+BOA_EXPECTED_PAYMENT_YEAR=25
+BOA_EXPECTED_PAYMENT_MONTH=10
 ```
 
 ## API Usage
@@ -67,7 +80,7 @@ Supports both query-param based and path-based URLs, as well as standalone IDs.
 
 ```json
 {
-  "receipt": "FT253183LQF089873517",
+  "receipt": "FT253183LQF089873510",
   "defaultVerification": true
 }
 ```
@@ -76,7 +89,7 @@ Supports both query-param based and path-based URLs, as well as standalone IDs.
 
 ```json
 {
-  "receipt": "https://apps.cbe.com.et:100/BranchReceipt/FT25292FRPWD&89873717",
+  "receipt": "https://apps.cbe.com.et:100/BranchReceipt/FT25292FRPWD&89873710",
   "defaultVerification": true
 }
 ```
@@ -87,7 +100,7 @@ Select specific fields to verify for any receipt type:
 
 ```json
 {
-  "receipt": "FT253W23LQF089173717",
+  "receipt": "FT253W23LQF089173710",
   "defaultVerification": {
     "amount": true,
     "recipientName": true,
@@ -97,19 +110,41 @@ Select specific fields to verify for any receipt type:
 }
 ```
 
-_Note: `status` verification is skipped for CBE receipts as it's not explicitly present._
+_Note: `status` verification is skipped for CBE and BOA receipts as it's not explicitly present._
+
+### 4. BOA (Bank of Abyssinia) Verification
+
+Supports both full URLs and standalone receipt IDs.
+
+**Option A: Using Receipt ID**
+
+```json
+{
+  "receipt": "FT25284X11PS79448",
+  "defaultVerification": true
+}
+```
+
+**Option B: Using Full URL**
+
+```json
+{
+  "receipt": "https://cs.bankofabyssinia.com/receipt?trx=FT25284X11PS79448",
+  "defaultVerification": true
+}
+```
 
 ## Batch Receipt Verification
 
-verify multiple Telebirr and CBE receipts in a single request.
+Verify multiple Telebirr, CBE, and BOA receipts in a single request.
 
 **Request:**
 
 ```json
 {
   "receipt": [
-    "FT253523LQF089573717",
-    "https://apps.cbe.com.et:100/BranchReceipt/FT25299FRPWD&85873717"
+    "FT24838X11PS82079",
+    "FT25284X11PS79328"
   ],
   "defaultVerification": true
 }
@@ -119,11 +154,11 @@ verify multiple Telebirr and CBE receipts in a single request.
 
 ```json
 {
-  "result": ["FT25R99FRPWD&89843717", "FT253Y23LQF789873717"],
-  "failed": [
+  "validReceipts": ["FT24838X11PS82079", "FT25284X11PS79328"],
+  "failedReceipts": [
     {
-      "receiptId": "https://apps.cbe.com.et:100/BranchReceipt/FT25235FRPWD&89873717",
-      "error": "Mismatch on amount. Expected: 30.00, Actual: 40.00"
+      "receiptId": "https://cs.bankofabyssinia.com/slip/?trx=FT25284X11PS79328",
+      "error": "Mismatch on amount. Expected: 100, Actual: 40.00"
     }
   ],
   "summary": {
