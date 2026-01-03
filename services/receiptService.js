@@ -1,56 +1,108 @@
-import config from "../config/verification.config.js";
 import { ConnectionTimeOut, NotFoundError } from "../utils/errorHandler.js";
+import { Pool } from "undici";
+
+// Create connection pools for each service with optimized settings
+const telebirrPool = new Pool("https://transactioninfo.ethiotelecom.et", {
+  connections: 50, // Max concurrent connections
+  pipelining: 10, // HTTP/1.1 pipelining for faster requests
+  keepAliveTimeout: 60000, // Keep connections alive for 60s
+  keepAliveMaxTimeout: 600000, // Max keep-alive time
+  headersTimeout: 15000, // 10s timeout for receiving headers
+  bodyTimeout: 15000, // 10s timeout for receiving body
+});
+
+const cbePool = new Pool("https://apps.cbe.com.et:100", {
+  connections: 50,
+  pipelining: 10,
+  keepAliveTimeout: 60000,
+  keepAliveMaxTimeout: 600000,
+  headersTimeout: 15000,
+  bodyTimeout: 15000,
+});
+
+const boaPool = new Pool("https://cs.bankofabyssinia.com", {
+  connections: 50,
+  pipelining: 10,
+  keepAliveTimeout: 60000,
+  keepAliveMaxTimeout: 600000,
+  headersTimeout: 15000,
+  bodyTimeout: 15000,
+});
 
 export const getReceiptData = async (receiptId) => {
   try {
     if (/^[A-Z0-9]{10}$/.test(receiptId)) {
-      const FULL_API = config?.telebirr?.api?.telebirrBaseUrl + receiptId;
+      // Telebirr
+      const path = `/receipt/${receiptId}`;
+      const { statusCode, body } = await telebirrPool.request({
+        path,
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+      });
 
-      const response = await fetch(FULL_API);
-
-      if (!response.ok) {
+      if (statusCode !== 200) {
         throw new NotFoundError(
-          `Failed to fetch receipt. Status: ${response.status}`
+          `Failed to fetch receipt. Status: ${statusCode}`
         );
       }
 
-      const rawHTML = await response.text();
-
+      const rawHTML = await body.text();
       return rawHTML;
     } else if (
       /^[A-Z0-9]{12}\d{8}$/.test(receiptId) ||
       /^[A-Z0-9]{12}&\d{8}$/.test(receiptId)
     ) {
-      let FULL_API;
-
+      // CBE
+      let path;
       if (receiptId.includes("&")) {
-        FULL_API = config?.cbe?.api?.cbeBaseUrl1 + receiptId;
+        path = `/BranchReceipt/${receiptId}`;
       } else {
-        FULL_API = config?.cbe?.api?.cbeBaseUrl2 + receiptId;
+        path = `/?id=${receiptId}`;
       }
 
-      const response = await fetch(FULL_API);
+      const { statusCode, body } = await cbePool.request({
+        path,
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+      });
 
-      if (!response.ok) {
+      if (statusCode !== 200) {
         throw new NotFoundError(
-          `Failed to fetch receipt. Status: ${response.status}`
+          `Failed to fetch receipt. Status: ${statusCode}`
         );
       }
 
-      return response;
+      // Eagerly consume body to release connection back to pool
+      const buffer = await body.arrayBuffer();
+      return {
+        arrayBuffer: async () => buffer,
+      };
     } else if (/^FT\d{5}[A-Z0-9]{5}\d{5}$/.test(receiptId)) {
+      // BOA
+      const path = `/api/onlineSlip/getDetails/?id=${receiptId}`;
 
-      const FULL_API = config?.boa?.api?.boaBaseUrl + receiptId;
+      const { statusCode, body } = await boaPool.request({
+        path,
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+      });
 
-      const response = await fetch(FULL_API);
-
-      if (!response.ok) {
+      if (statusCode !== 200) {
         throw new NotFoundError(
-          `Failed to fetch receipt. Status: ${response.status}`
+          `Failed to fetch receipt. Status: ${statusCode}`
         );
       }
 
-      const parsedResponse = await response.json();
+      const parsedResponse = await body.json();
 
       if (
         !Array.isArray(parsedResponse.body) ||
@@ -65,7 +117,6 @@ export const getReceiptData = async (receiptId) => {
     if (error.status) {
       throw error;
     }
-
     throw new ConnectionTimeOut(error.message);
   }
 };

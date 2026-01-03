@@ -27,7 +27,7 @@ const verifySingleReceipt = async (receipt, defaultVerification) => {
     if (!ID) throw new Error("Invalid TeleBirr Receipt ID");
 
     getRawReceiptData = await getReceiptData(ID);
-    validationResult = telebirrVerification(
+    validationResult =  telebirrVerification(
       getRawReceiptData,
       defaultVerification
     );
@@ -80,54 +80,21 @@ const batchVerify = async (req, res) => {
       throw new ValidationError("defaultVerification is required");
     }
 
-    let validReceipts = [];
-    let failedReceipts = [];
-
-    // Check if parallel processing is enabled
-    const { enableParallelProcessing } = (
-      await import("../config/performance.config.js")
-    ).default.batch;
-
-    if (enableParallelProcessing) {
-      // Use parallel batch processor
-      const results = await processBatch(receipt, (item) =>
-        verifySingleReceipt(item, defaultVerification)
-      );
-
-      validReceipts = results.valid;
-      failedReceipts = results.failed.map((f) => ({
-        receiptId: f.item,
-        error: f.error,
-      }));
-    } else {
-      // Use sequential processing (original implementation)
-      for (const element of receipt) {
-        if (!element) continue;
-
-        try {
-          const result = await verifySingleReceipt(
-            element,
-            defaultVerification
-          );
-          if (result) {
-            validReceipts.push(result);
-          }
-        } catch (error) {
-          failedReceipts.push({
-            receiptId: element,
-            error: error.message,
-          });
-        }
-      }
-    }
+    // Use parallel batch processor
+    const results = await processBatch(receipt, (item) =>
+      verifySingleReceipt(item, defaultVerification)
+    );
 
     return res.status(200).json({
-      validReceipts: validReceipts,
-      failedReceipts: failedReceipts,
+      result: results.valid,
+      failed: results.failed.map((f) => ({
+        receiptId: f.item,
+        error: f.error,
+      })),
       summary: {
-        total: receipt.length,
-        valid: validReceipts.length,
-        invalid: failedReceipts.length,
+        total: results.total,
+        valid: results.valid.length,
+        invalid: results.failed.length,
       },
     });
   } catch (error) {
