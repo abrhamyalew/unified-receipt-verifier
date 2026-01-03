@@ -189,12 +189,12 @@ Edit `config/verification.config.js` to change default verification fields and e
 
 Edit `config/performance.config.js` to tune batch processing:
 
-```json
+```javascript
 export default {
   batch: {
-    maxBatchSize: 10, // Max receipts per request
-    defaultConcurrency: 10, // Parallel verification limit
-    timeout: 60000, // Max processing time (60s)
+    maxBatchSize: 10, 
+    defaultConcurrency: 10,
+    timeout: 60000,
   },
 };
 ```
