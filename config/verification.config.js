@@ -102,6 +102,38 @@ const config = {
       retries: 3,
     },
   },
+
+  amharaBank: {
+    // Fields to verify
+    defaultVerificationFields: {
+      amount: true,
+      recipientName: true,
+      date: true, // Validates payment month/year to prevent fraud
+      accountNumber: true,
+    },
+
+    // Expected values from environment
+    expectedData: {
+      amount: process.env.BOA_EXPECTED_AMOUNT || null,
+      recipientName: process.env.BOA_EXPECTED_RECIPIENT_NAME || null,
+      accountNumber: process.env.BOA_EXPECTED_RECIPIENT_ACCOUNT || null,
+      paymentYear: process.env.BOA_EXPECTED_PAYMENT_YEAR || null,
+      paymentMonth: process.env.BOA_EXPECTED_PAYMENT_MONTH || null,
+    },
+    // Validation rules
+    validation: {
+      amountTolerance: 0, // Must be exact amount
+      nameCaseSensitive: false,
+      allowPartialNameMatch: true,
+    },
+
+    // API configuration
+    api: {
+      boaBaseUrl: "https://transaction.amharabank.com.et/",
+      timeout: 5000,
+      retries: 3,
+    },
+  },
 };
 
 export default config;

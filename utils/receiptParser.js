@@ -1,3 +1,4 @@
+import { validationResult } from "express-validator";
 import { ValidationError } from "./errorHandler.js";
 
 export const telebirrParser = (input) => {
@@ -75,8 +76,6 @@ export const cbeParser = (input) => {
   }
 };
 
-
-
 export const boaParser = (input) => {
   try {
     if (!input || typeof input !== "string") return null;
@@ -104,5 +103,27 @@ export const boaParser = (input) => {
     }
 
     return null;
+  }
+};
+
+
+export const amharaBank = (input) => {
+  try {
+    if (!input || typeof input !== "string") return null;
+
+    const trimInput = input.trim();
+
+    const id = trimInput.split("/").pop();
+
+    const isValid = /([A-Z0-9]{12})/.test(id);
+
+    return isValid ? id : null;
+
+  } catch {
+    const trimInput = input.trim();
+
+    const isvalid = /([A-Z0-9]{12})/.test(trimInput);
+
+    return isvalid ? trimInput : null;
   }
 };
