@@ -2,11 +2,13 @@ import {
   telebirrParser,
   cbeParser,
   boaParser,
+  amharaBankParser,
 } from "../utils/receiptParser.js";
 import { getReceiptData } from "../services/receiptService.js";
 import { telebirrVerification } from "../validators/telebirrValidator.js";
 import { cbeVerification } from "../validators/cbeValidator.js";
 import { boaVerification } from "../validators/boaValidator.js";
+import { amharaBankVerification } from "../validators/amharabankValidator.js";
 import { ValidationError } from "../utils/errorHandler.js";
 
 const getTelebirrReceipt = async (req, res) => {
@@ -63,6 +65,19 @@ const getTelebirrReceipt = async (req, res) => {
         getRawReceiptData,
         defaultVerification,
       );
+    } else if (
+      trimedReceipt.toLowerCase().includes("amharabank") ||
+      /([A-Z0-9]{12})/.test(trimedReceipt)
+    ) {
+      ID = amharaBankParser(trimedReceipt);
+      if(!ID) return res.status(400).json({ error: "Invalid BOA Receipt ID"});
+
+      getRawReceiptData = await getReceiptData(ID);
+
+      validationResult = await amharaBankVerification(
+        getRawReceiptData,
+        defaultVerification
+      )
     } else {
       throw new ValidationError(`receipt '${receipt}' is NOT a valid receipt`);
     }

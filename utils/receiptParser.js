@@ -107,7 +107,7 @@ export const boaParser = (input) => {
 };
 
 
-export const amharaBank = (input) => {
+export const amharaBankParser = (input) => {
   try {
     if (!input || typeof input !== "string") return null;
 
