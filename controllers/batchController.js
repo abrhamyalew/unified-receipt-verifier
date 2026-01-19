@@ -2,11 +2,13 @@ import { getReceiptData } from "../services/receiptService.js";
 import { telebirrVerification } from "../validators/telebirrValidator.js";
 import { cbeVerification } from "../validators/cbeValidator.js";
 import { boaVerification } from "../validators/boaValidator.js";
+import { amharaBankVerification } from "../validators/amharabankValidator.js";
 import { processBatch } from "../services/batchProcessor.js";
 import {
   telebirrParser,
   cbeParser,
   boaParser,
+  amharaBankParser,
 } from "../utils/receiptParser.js";
 import { ValidationError } from "../utils/errorHandler.js";
 
@@ -53,6 +55,19 @@ const verifySingleReceipt = async (receipt, defaultVerification) => {
 
     getRawReceiptData = await getReceiptData(ID);
     validationResult = await boaVerification(
+      getRawReceiptData,
+      defaultVerification,
+    );
+  } else if (
+    trimedReceipt.toLowerCase().includes("amharabank") ||
+    /^[A-Z0-9]{12}$/.test(trimedReceipt)
+  ) {
+    // Amhara Bank
+    ID = amharaBankParser(trimedReceipt);
+    if (!ID) throw new Error("Invalid Amhara Bank Receipt ID");
+
+    getRawReceiptData = await getReceiptData(ID);
+    validationResult = await amharaBankVerification(
       getRawReceiptData,
       defaultVerification,
     );

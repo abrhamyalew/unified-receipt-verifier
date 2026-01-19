@@ -73,7 +73,7 @@ const getTelebirrReceipt = async (req, res) => {
       if (!ID)
         return res
           .status(400)
-          .json({ error: "Invalid Amhara Bannk Receipt ID" });
+          .json({ error: "Invalid Amhara Bank Receipt ID" });
 
       getRawReceiptData = await getReceiptData(ID);
 
