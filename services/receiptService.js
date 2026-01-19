@@ -123,7 +123,7 @@ export const getReceiptData = async (receiptId) => {
       return parsedResponse.body[0];
     } else if (/^[A-Z0-9]{12}$/.test(receiptId)) {
       // Amhara Bank
-      const path = `/api/transaction/${receiptId}`;
+      const path = `/${receiptId}`;
 
       const { statusCode, body } = await amharaBankPool.request({
         path,
@@ -135,9 +135,7 @@ export const getReceiptData = async (receiptId) => {
       });
 
       if (statusCode !== 200) {
-        throw new NotFoundError(
-          `Failed to fetch receipt. Status: ${statusCode}`,
-        );
+        throw new NotFoundError("Receipt data not found or invalid");
       }
 
       const parsedResponse = await body.json();
@@ -146,7 +144,7 @@ export const getReceiptData = async (receiptId) => {
         throw new NotFoundError("Receipt data not found or invalid");
       }
 
-      return parsedResponse;
+      return parsedResponse.data;
     }
   } catch (error) {
     if (error.status) {

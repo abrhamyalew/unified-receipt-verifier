@@ -106,7 +106,6 @@ export const boaParser = (input) => {
   }
 };
 
-
 export const amharaBankParser = (input) => {
   try {
     if (!input || typeof input !== "string") return null;
@@ -115,14 +114,13 @@ export const amharaBankParser = (input) => {
 
     const id = trimInput.split("/").pop();
 
-    const isValid = /([A-Z0-9]{12})/.test(id);
+    const isValid = /^[A-Z0-9]{12}$/.test(id);
 
     return isValid ? id : null;
-
   } catch {
     const trimInput = input.trim();
 
-    const isvalid = /([A-Z0-9]{12})/.test(trimInput);
+    const isvalid = /^[A-Z0-9]{12}$/.test(trimInput);
 
     return isvalid ? trimInput : null;
   }

@@ -114,11 +114,11 @@ const config = {
 
     // Expected values from environment
     expectedData: {
-      amount: process.env.BOA_EXPECTED_AMOUNT || null,
-      recipientName: process.env.BOA_EXPECTED_RECIPIENT_NAME || null,
-      accountNumber: process.env.BOA_EXPECTED_RECIPIENT_ACCOUNT || null,
-      paymentYear: process.env.BOA_EXPECTED_PAYMENT_YEAR || null,
-      paymentMonth: process.env.BOA_EXPECTED_PAYMENT_MONTH || null,
+      amount: process.env.AB_EXPECTED_AMOUNT || null,
+      recipientName: process.env.AB_EXPECTED_RECIPIENT_NAME || null,
+      accountNumber: process.env.AB_EXPECTED_RECIPIENT_ACCOUNT || null,
+      paymentYear: process.env.AB_EXPECTED_PAYMENT_YEAR || null,
+      paymentMonth: process.env.AB_EXPECTED_PAYMENT_MONTH || null,
     },
     // Validation rules
     validation: {

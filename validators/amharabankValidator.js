@@ -2,7 +2,7 @@ import config from "../config/verification.config.js";
 import { ValidationError } from "../utils/errorHandler.js";
 
 export const amharaBankVerification = (parsedData, defaultVerification) => {
-  if (parsedData["status"] !== true) {
+  if (parsedData["status"] !== "Auth") {
     throw new ValidationError("Transaction status is not successful");
   }
 

@@ -65,9 +65,9 @@ export const cbeVerification = async (pdfResponse, defaultVerification) => {
         throw new ValidationError("No parsed data for date");
       }
 
-      const dateParts = parsedData.data;
+      const dateParts = parsedData.date;
       if (dateParts) {
-        const [day, month, year] = dateParts;
+        const [month, day, year] = dateParts.split("/");
 
         if (
           expectedData.paymentYear &&
@@ -104,11 +104,10 @@ export const cbeVerification = async (pdfResponse, defaultVerification) => {
       );
     }
 
-    let matches = true;
-
-    if (key === "amount") {
-      matches = compareAmount(expected, parsed);
-    }
+    const matches =
+      key === "amount"
+        ? compareAmount(expected, parsed)
+        : String(expected).trim() === String(parsed).trim();
 
     if (!matches) {
       throw new ValidationError(
