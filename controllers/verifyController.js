@@ -67,17 +67,20 @@ const getTelebirrReceipt = async (req, res) => {
       );
     } else if (
       trimedReceipt.toLowerCase().includes("amharabank") ||
-      /([A-Z0-9]{12})/.test(trimedReceipt)
+      /^[A-Z0-9]{12}$/.test(trimedReceipt)
     ) {
       ID = amharaBankParser(trimedReceipt);
-      if(!ID) return res.status(400).json({ error: "Invalid BOA Receipt ID"});
+      if (!ID)
+        return res
+          .status(400)
+          .json({ error: "Invalid Amhara Bannk Receipt ID" });
 
       getRawReceiptData = await getReceiptData(ID);
 
       validationResult = await amharaBankVerification(
         getRawReceiptData,
-        defaultVerification
-      )
+        defaultVerification,
+      );
     } else {
       throw new ValidationError(`receipt '${receipt}' is NOT a valid receipt`);
     }
