@@ -1,8 +1,7 @@
 import express from "express";
-import type { Express } from "express";
 import cors from "cors";
 import verifyRoute from "./routes/verify.routes.js";
-const app: Express = express();
+const app = express();
 
 app.use(express.json());
 app.use(cors());
