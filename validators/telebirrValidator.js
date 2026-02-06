@@ -2,7 +2,7 @@ import config from "../config/verification.config.js";
 import { ValidationError, NotFoundError } from "../utils/errorHandler.js";
 import * as cheerio from "cheerio";
 
-export const telebirrVerification = (rawHTML, defaultVerification) => {
+export const telebirrVerification = (rawHTML, defaultVerification:) => {
   const $ = cheerio.load(rawHTML);
 
   const request = $("div").text();
