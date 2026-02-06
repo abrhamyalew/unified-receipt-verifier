@@ -1,32 +1,24 @@
-import { validationResult } from "express-validator";
-import { ValidationError } from "./errorHandler.js";
-
-export const telebirrParser = (input) => {
-  if (!input || typeof input !== "string") return null;
+export const telebirrParser = (input: string): string | null => {
+  if (!input) return null;
 
   //case 1: if user puts full URL
   const trimInput = input.trim();
-  let id;
 
-  if (trimInput.includes("https")) {
-    id = trimInput.split("/receipt/")[1];
-  } else {
-    id = trimInput;
-  }
+  const id = trimInput.includes("https")
+    ? trimInput.split("/receipt/")[1]
+    : trimInput; 
+
+  if(!id) return null;
 
   //case 2: if they pasted the receipt code only
   const pattern = /^[A-Z0-9]{10}$/;
 
-  if (pattern.test(id)) {
-    return id;
-  }
-
-  return null;
+  return pattern.test(id) ? id : null;
 };
 
-export const cbeParser = (input) => {
+export const cbeParser = (input: string): string | null => {
   try {
-    if (!input || typeof input !== "string") return null;
+    if (!input) return null;
 
     const trimInput = input.trim();
 
@@ -35,32 +27,25 @@ export const cbeParser = (input) => {
     if (link.searchParams.toString()) {
       const url = link.searchParams.get("id");
 
-      const trimInput = url.trim();
+      if(!url) return null;
+
+      const trimmedId = url.trim();
 
       const pattern = /^[A-Z0-9]{12}\d{8}$/;
 
-      if (pattern.test(trimInput)) {
-        return trimInput;
-      }
+      return pattern.test(trimmedId) ? trimmedId : null;
 
-      return null;
     } else {
       const trimInput = input.trim();
-      let id;
 
-      if (trimInput.includes("https")) {
-        id = trimInput.split("/BranchReceipt/")[1];
-      } else {
-        id = trimInput;
-      }
+      const id = trimInput.includes("https")
+        ? trimInput.split("/BranchReceipt/")[1]
+        : trimInput;
+
+        if(!id) return null;
 
       const pattern = /^[A-Z0-9]{12}&\d{8}$/;
-
-      if (pattern.test(id)) {
-        return id;
-      }
-
-      return null;
+      return pattern.test(id) ? id : null;
     }
   } catch (error) {
     const trimInput = input.trim();
@@ -76,9 +61,9 @@ export const cbeParser = (input) => {
   }
 };
 
-export const boaParser = (input) => {
+export const boaParser = (input: string): string | null => {
   try {
-    if (!input || typeof input !== "string") return null;
+    if (!input) return null;
 
     const trimInput = input.trim();
 
@@ -106,13 +91,15 @@ export const boaParser = (input) => {
   }
 };
 
-export const amharaBankParser = (input) => {
+export const amharaBankParser = (input: string): string | null => {
   try {
-    if (!input || typeof input !== "string") return null;
+    if (!input) return null;
 
     const trimInput = input.trim();
 
     const id = trimInput.split("/").pop();
+
+    if(!id) return null
 
     const isValid = /^[A-Z0-9]{12}$/.test(id);
 
