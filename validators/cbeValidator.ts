@@ -33,9 +33,6 @@ export const cbeVerification = async (pdfResponse: cbeParsedData, defaultVerific
     recipientName: extractField(text, /Receiver\s*([A-Z\s]+?)(?=\s*Account)/i),
   };
 
-  console.log(parsedData);
-
-
   let verificationFlags: Partial<cbeVerificationFlags>;
 
   if (defaultVerification === true) {

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",
-    "start": "npx tsc && node dist/index.js"
+    "start": "npx tsc && node build/server.js"
   },
   "keywords": [],
   "author": "Abrham Yalew",
