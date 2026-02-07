@@ -1,5 +1,11 @@
 import { ConnectionTimeOut, NotFoundError } from "../utils/errorHandler.js";
 import { Pool } from "undici";
+import type { boaParsedData } from "../types/validationType.js";
+import type {
+  AmharaBankApiResponse,
+  BoaApiResponse,
+  ReceiptData,
+} from "../types/serviceTypes.js";
 
 // Create connection pools for each service with optimized settings
 const telebirrPool = new Pool("https://transactioninfo.ethiotelecom.et", {
@@ -38,7 +44,9 @@ const amharaBankPool = new Pool("https://transaction.amharabank.com.et", {
   bodyTimeout: 15000,
 });
 
-export const getReceiptData = async (receiptId) => {
+export const getReceiptData = async (
+  receiptId: string,
+): Promise<ReceiptData | undefined> => {
   try {
     if (/^[A-Z0-9]{10}$/.test(receiptId)) {
       // Telebirr
@@ -65,7 +73,7 @@ export const getReceiptData = async (receiptId) => {
       /^[A-Z0-9]{12}&\d{8}$/.test(receiptId)
     ) {
       // CBE
-      let path;
+      let path: string;
       if (receiptId.includes("&")) {
         path = `/BranchReceipt/${receiptId}`;
       } else {
@@ -111,7 +119,7 @@ export const getReceiptData = async (receiptId) => {
         );
       }
 
-      const parsedResponse = await body.json();
+      const parsedResponse = (await body.json()) as BoaApiResponse<boaParsedData>;
 
       if (
         !Array.isArray(parsedResponse.body) ||
@@ -138,7 +146,7 @@ export const getReceiptData = async (receiptId) => {
         throw new NotFoundError("Receipt data not found or invalid");
       }
 
-      const parsedResponse = await body.json();
+      const parsedResponse = (await body.json()) as AmharaBankApiResponse;
 
       if (!parsedResponse || parsedResponse.status !== true) {
         throw new NotFoundError("Receipt data not found or invalid");
@@ -147,9 +155,13 @@ export const getReceiptData = async (receiptId) => {
       return parsedResponse.data;
     }
   } catch (error) {
-    if (error.status) {
-      throw error;
+    if (typeof error === "object" && error !== null && "status" in error) {
+      const status = (error as { status?: number }).status;
+      if (status) {
+        throw error;
+      }
     }
-    throw new ConnectionTimeOut(error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new ConnectionTimeOut(message);
   }
 };
