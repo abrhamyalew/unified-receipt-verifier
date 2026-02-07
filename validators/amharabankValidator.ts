@@ -1,40 +1,45 @@
 import config from "../config/verification.config.js";
 import { ValidationError } from "../utils/errorHandler.js";
+import { amharaBankParsedData, amharaBankVerificationFlags } from "../types/validationType.js";
 
-export const boaVerification = async (parsedData, defaultVerification) => {
-  const date = parsedData["Transaction Date"];
+export const amharaBankVerification = (parsedData: amharaBankParsedData, defaultVerification: amharaBankVerificationFlags | true) => {
+  if (parsedData["status"] !== "Auth") {
+    throw new ValidationError("Transaction status is not successful");
+  }
+
+  const date = parsedData["bookingDate"];
 
   if (!date) {
     throw new ValidationError("No parsed data for Transaction Date");
   }
 
-  const [datePart] = date.split(" ");
-  const [day, month, year] = datePart.split("/");
+  const year = date.slice(0, 4);
+  const month = date.slice(4, 6);
 
   const receiptData = {
-    amount: parsedData["Transferred Amount"],
+    amount: parsedData["amount"],
     month: month,
     year: year,
-    recipientName: parsedData["Receiver's Name"],
-    accountNumber: parsedData["Receiver's Account"],
+    recipientName: parsedData["creditorName"],
+    accountNumber: parsedData["creditAccountId"],
   };
 
-  let verificationFlags;
+  let verificationFlags: Partial<amharaBankVerificationFlags>;
 
   if (defaultVerification === true) {
-    verificationFlags = config.boa.defaultVerificationFields;
+    verificationFlags = config.amharaBank.defaultVerificationFields;
   } else if (
     typeof defaultVerification === "object" &&
     defaultVerification !== null
   ) {
     verificationFlags = defaultVerification;
   } else {
-    verificationFlags = config.boa.defaultVerificationFields;
+    verificationFlags = config.amharaBank.defaultVerificationFields;
   }
 
-  const expectedData = config.boa.expectedData;
+  const expectedData = config.amharaBank.expectedData;
 
-  const compareAmount = (expected, parsed) => {
+  const compareAmount = (expected: number | string, parsed: number | string): boolean => {
     const expectedNum = Number(expected);
     const parsedNum = Number(parsed);
     if (Number.isNaN(expectedNum) || Number.isNaN(parsedNum)) {
@@ -43,7 +48,17 @@ export const boaVerification = async (parsedData, defaultVerification) => {
     return expectedNum === parsedNum;
   };
 
-  for (const key in verificationFlags) {
+  
+  type verificationKey = keyof amharaBankVerificationFlags
+  const verificationKeys: verificationKey[] = [
+    "date",
+    "amount",
+    "recipientName",
+    "accountNumber",
+  ];
+
+
+  for (const key of verificationKeys) {
     if (!verificationFlags[key]) continue;
 
     if (key === "date") {

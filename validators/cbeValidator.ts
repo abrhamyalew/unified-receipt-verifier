@@ -1,24 +1,24 @@
 import config from "../config/verification.config.js";
 import { ValidationError } from "../utils/errorHandler.js";
 import { createRequire } from "module";
+import { cbeParsedData, cbeVerificationFlags } from "../types/validationType.js";
 
 const require = createRequire(import.meta.url);
 const pdf = require("pdf-parse/lib/pdf-parse.js");
 
-export const cbeVerification = async (pdfResponse, defaultVerification) => {
+export const cbeVerification = async (pdfResponse: cbeParsedData, defaultVerification: cbeVerificationFlags | true) => {
+
   const buffer = await pdfResponse.arrayBuffer();
   const data = await pdf(Buffer.from(buffer));
   const text = data.text;
 
-  function extractField(text, regex) {
+  function extractField(text: string, regex: RegExp | string) {
     const match = text.match(regex);
     return match ? match[1].trim() : null;
   }
 
   const parsedData = {
-    amount: extractField(text, /Transferred Amount\s*([\d.]+\s*ETB)/i).split(
-      ".",
-    )[0],
+    amount: extractField(text, /Transferred Amount\s*([\d.]+\s*ETB)/i)?.split(".",)[0] ?? "",
 
     date: extractField(
       text,
@@ -33,7 +33,8 @@ export const cbeVerification = async (pdfResponse, defaultVerification) => {
     recipientName: extractField(text, /Receiver\s*([A-Z\s]+?)(?=\s*Account)/i),
   };
 
-  let verificationFlags;
+  let verificationFlags: Partial<cbeVerificationFlags>;
+
   if (defaultVerification === true) {
     verificationFlags = config.cbe.defaultVerificationFields;
   } else if (
@@ -47,7 +48,7 @@ export const cbeVerification = async (pdfResponse, defaultVerification) => {
 
   const expectedData = config.cbe.expectedData;
 
-  const compareAmount = (expected, parsed) => {
+  const compareAmount = (expected: string | number, parsed: string | number ) => {
     const expectedNum = Number(expected);
     const parsedNum = Number(parsed);
     if (Number.isNaN(expectedNum) || Number.isNaN(parsedNum)) {
@@ -56,7 +57,16 @@ export const cbeVerification = async (pdfResponse, defaultVerification) => {
     return expectedNum === parsedNum;
   };
 
-  for (const key in verificationFlags) {
+  
+  type verificationKey = keyof cbeVerificationFlags
+  const verificationKeys: verificationKey[] = [
+    "date",
+    "amount",
+    "recipientName",
+    "accountNumber",
+  ];
+
+  for (const key of verificationKeys) {
     if (!verificationFlags[key]) continue;
 
     if (key === "date") {
