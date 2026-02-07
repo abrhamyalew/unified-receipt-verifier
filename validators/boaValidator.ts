@@ -45,8 +45,6 @@ export const boaVerification = async (parsedData: boaParsedData, defaultVerifica
   };
 
   type verificationKey = keyof boaVerificationFlags
-  type DataKey = Exclude<verificationKey, "date">;
-
   const verificationKeys: verificationKey[] = [
     "date",
     "amount",
@@ -78,10 +76,8 @@ export const boaVerification = async (parsedData: boaParsedData, defaultVerifica
       continue;
     }
 
-    const dataKey = key as DataKey;
-
-    const expected = expectedData[dataKey];
-    const parsed = receiptData[dataKey];
+    const expected = expectedData[key];
+    const parsed = receiptData[key];
 
     if (expected === undefined || expected === null) {
       throw new ValidationError(

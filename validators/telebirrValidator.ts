@@ -1,9 +1,20 @@
 import config from "../config/verification.config.js";
 import { ValidationError, NotFoundError } from "../utils/errorHandler.js";
 import * as cheerio from "cheerio";
+import type { Cheerio, CheerioAPI } from "cheerio";
+import type { AnyNode } from "domhandler";
+import {
+  telebirrParsedData,
+  telebirrVerificationFlags,
+} from "../types/validationType.js";
 
-export const telebirrVerification = (rawHTML, defaultVerification:) => {
-  const $ = cheerio.load(rawHTML);
+type ScopeFn = (selector: string) => Cheerio<AnyNode>;
+
+export const telebirrVerification = (
+  rawHTML: string,
+  defaultVerification: telebirrVerificationFlags | true,
+): boolean => {
+  const $: CheerioAPI = cheerio.load(rawHTML);
 
   const request = $("div").text();
 
@@ -11,9 +22,10 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
     throw new NotFoundError("Receipt not found or invalid");
   }
 
-  const normalize = (str) => str.replace(/\s+/g, " ").trim().toLowerCase();
+  const normalize = (str: string): string =>
+    str.replace(/\s+/g, " ").trim().toLowerCase();
 
-  const findAdjacentValue = (labelText, scope = $) => {
+  const findAdjacentValue = (labelText: string, scope: ScopeFn = $): string => {
     const matcher = normalize(labelText);
     const td = scope("td")
       .filter((_, el) => normalize($(el).text()).includes(matcher))
@@ -22,7 +34,10 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
     return td.next("td").text().replace(/\s+/g, " ").trim();
   };
 
-  const findColumnValueFromHeader = (table, labelText) => {
+  const findColumnValueFromHeader = (
+    table: Cheerio<AnyNode>,
+    labelText: string,
+  ): string => {
     const matcher = normalize(labelText);
     const headerTd = table
       .find("td")
@@ -58,7 +73,7 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
 
   const accountAndName = $("#paid_reference_number").text();
   const parts = accountAndName.trim().split(/\s+/);
-  const accountNumber = parts.shift();
+  const accountNumber = parts.shift() ?? "";
   const name = parts.join(" ").trim();
 
   const amountRaw = invoiceTable.length
@@ -74,7 +89,7 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
     ? findAdjacentValue("transaction status", (sel) => statusTable.find(sel))
     : "";
 
-  const parsedData = {
+  const parsedData: telebirrParsedData = {
     amount: amountFromTable,
     status: status,
     recipientName: name,
@@ -82,7 +97,7 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
     accountNumber: accountNumber,
   };
 
-  let verificationFlags;
+  let verificationFlags: Partial<telebirrVerificationFlags>;
 
   if (defaultVerification === true) {
     verificationFlags = config.telebirr.defaultVerificationFields;
@@ -97,7 +112,7 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
 
   const expectedData = config.telebirr.expectedData;
 
-  const compareAmount = (expected, parsed) => {
+  const compareAmount = (expected: string | number, parsed: string | number) => {
     const expectedNum = Number(expected);
     const parsedNum = Number(parsed);
     if (Number.isNaN(expectedNum) || Number.isNaN(parsedNum)) {
@@ -106,7 +121,16 @@ export const telebirrVerification = (rawHTML, defaultVerification:) => {
     return expectedNum === parsedNum;
   };
 
-  for (const key in verificationFlags) {
+  type verificationKey = keyof telebirrVerificationFlags;
+  const verificationKeys: verificationKey[] = [
+    "amount",
+    "status",
+    "recipientName",
+    "accountNumber",
+    "date",
+  ];
+
+  for (const key of verificationKeys) {
     if (!verificationFlags[key]) continue;
 
     if (key === "date") {

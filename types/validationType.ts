@@ -29,3 +29,32 @@ export type boaVerificationFlags = {
   recipientName: boolean,
   accountNumber: boolean,
 }
+
+//cbe parsed data adn validation flag
+export type cbeParsedData = {
+  arrayBuffer: () => Promise<ArrayBuffer>;
+}
+
+export type cbeVerificationFlags = {
+  amount: boolean,
+  date: boolean,
+  recipientName: boolean,
+  accountNumber: boolean,
+}
+
+//telebirr parsed data adn validation flag
+export type telebirrParsedData = {
+  amount: string,
+  status: string,
+  recipientName: string,
+  date: string,
+  accountNumber: string
+}
+
+export type telebirrVerificationFlags = {
+  amount: boolean,
+  status: boolean,
+  recipientName: boolean,
+  accountNumber: boolean,
+  date: boolean,
+}

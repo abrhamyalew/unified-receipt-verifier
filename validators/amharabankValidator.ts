@@ -50,8 +50,6 @@ export const amharaBankVerification = (parsedData: amharaBankParsedData, default
 
   
   type verificationKey = keyof amharaBankVerificationFlags
-  type DataKey = Exclude<verificationKey, "date">;
-
   const verificationKeys: verificationKey[] = [
     "date",
     "amount",
@@ -83,10 +81,8 @@ export const amharaBankVerification = (parsedData: amharaBankParsedData, default
       continue;
     }
 
-    const dataKey = key as DataKey;
-
-    const expected = expectedData[dataKey];
-    const parsed = receiptData[dataKey];
+    const expected = expectedData[key];
+    const parsed = receiptData[key];
 
     if (expected === undefined || expected === null) {
       throw new ValidationError(
