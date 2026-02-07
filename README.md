@@ -6,7 +6,7 @@ Ideal for startup SaaS applications that need a simple, reliable way to verify p
 
 ## Currently Supported Banks and Wallets
 
-**✓ Telebirr** | **✓ CBE (Commercial Bank of Ethiopia)** | **✓ BOA (Bank of Abyssinia)**
+**✓ Telebirr** | **✓ CBE (Commercial Bank of Ethiopia)** | **✓ BOA (Bank of Abyssinia)** | **✓ Amhara Bank**
 
 **More coming soon!**
 
@@ -67,22 +67,23 @@ BOA_EXPECTED_PAYMENT_YEAR=25
 BOA_EXPECTED_PAYMENT_MONTH=10
 ```
 
+### Amhara Bank Configuration
+
+Add these variables to your `.env` for Amhara Bank verification:
+
+```env
+AB_EXPECTED_AMOUNT=25
+AB_EXPECTED_RECIPIENT_ACCOUNT=ETB1251800010003
+AB_EXPECTED_RECIPIENT_NAME=Abrham Yalew
+AB_EXPECTED_PAYMENT_YEAR=2026
+AB_EXPECTED_PAYMENT_MONTH=01
+```
+
 ## API Usage
 
 **POST** `http://localhost:5000/api/verify`
 
-### 1. Telebirr Verification
-
-You can use the receipt ID or full URL:
-
-```json
-{
-  "receipt": "CJP9OSW9U",
-  "defaultVerification": true
-}
-```
-
-### 2. CBE Verification
+### 1. Verification
 
 Supports both query-param based and path-based URLs, as well as standalone IDs.
 
@@ -104,7 +105,7 @@ Supports both query-param based and path-based URLs, as well as standalone IDs.
 }
 ```
 
-### 3. Custom Field Verification
+### 2. Custom Field Verification
 
 Select specific fields to verify for any receipt type:
 
@@ -122,40 +123,19 @@ Select specific fields to verify for any receipt type:
 
 _Note: `status` verification is skipped for CBE and BOA receipts as it's not explicitly present._
 
-### 4. BOA (Bank of Abyssinia) Verification
-
-Supports both full URLs and standalone receipt IDs.
-
-**Option A: Using Receipt ID**
-
-```json
-{
-  "receipt": "FT25284X11PS79448",
-  "defaultVerification": true
-}
-```
-
-**Option B: Using Full URL**
-
-```json
-{
-  "receipt": "https://cs.bankofabyssinia.com/receipt?trx=FT25284X11PS79448",
-  "defaultVerification": true
-}
-```
 
 ## Batch Receipt Verification
 
 Verify multiple Telebirr, CBE, and BOA receipts in a single request.
 
+**POST** `http://localhost:5000/api/verify/batch`
+
+
 **Request:**
 
 ```json
 {
-  "receipt": [
-    "FT24838X11PS82079",
-    "FT25284X11PS79328"
-  ],
+  "receipt": ["FT24838X11PS82079", "FT25284X11PS79328"],
   "defaultVerification": true
 }
 ```
@@ -192,7 +172,7 @@ Edit `config/performance.config.js` to tune batch processing:
 ```javascript
 export default {
   batch: {
-    maxBatchSize: 10, 
+    maxBatchSize: 10,
     defaultConcurrency: 10,
     timeout: 60000,
   },

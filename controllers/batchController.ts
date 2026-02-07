@@ -2,11 +2,13 @@ import { getReceiptData } from "../services/receiptService.js";
 import { telebirrVerification } from "../validators/telebirrValidator.js";
 import { cbeVerification } from "../validators/cbeValidator.js";
 import { boaVerification } from "../validators/boaValidator.js";
+import { amharaBankVerification } from "../validators/amharabankValidator.js";
 import { processBatch } from "../services/batchProcessor.js";
 import {
   telebirrParser,
   cbeParser,
   boaParser,
+  amharaBankParser,
 } from "../utils/receiptParser.js";
 import { ValidationError } from "../utils/errorHandler.js";
 import type { Request, Response } from "express";
@@ -15,7 +17,9 @@ import type { BatchVerifyRequestBody } from "../types/batchControllerType.js";
 import type {
   cbeParsedData,
   boaParsedData,
+  amharaBankParsedData,
   cbeVerificationFlags,
+  amharaBankVerificationFlags,
   boaVerificationFlags,
   telebirrVerificationFlags,
 } from "../types/validationType.js";
@@ -26,6 +30,9 @@ const isCbeResponse = (data: ReceiptData): data is cbeParsedData =>
 
 const isBoaResponse = (data: ReceiptData): data is boaParsedData =>
   typeof data === "object" && data !== null && "Transaction Date" in data;
+
+const isAmharaResponse = (data: ReceiptData): data is amharaBankParsedData =>
+  typeof data === "object" && data !== null && "creditAccountId" in data;
 
 const verifySingleReceipt = async (
   receipt: string,
@@ -94,6 +101,24 @@ const verifySingleReceipt = async (
     validationResult = await boaVerification(
       getRawReceiptData,
       defaultVerification as boaVerificationFlags | true,
+    );
+  } else if (
+    trimedReceipt.toLowerCase().includes("amharabank") ||
+    /^[A-Z0-9]{12}$/.test(trimedReceipt)
+  ) {
+    // Amhara Bank
+    ID = amharaBankParser(trimedReceipt);
+    if (!ID) throw new Error("Invalid Amhara Bank Receipt ID");
+
+    const getRawReceiptData = await getReceiptData(ID);
+
+    if (!getRawReceiptData || !isAmharaResponse(getRawReceiptData)) {
+      throw new ValidationError(`Receipt '${receipt}' is not recognized`);
+    }
+
+    validationResult = await amharaBankVerification(
+      getRawReceiptData,
+      defaultVerification as amharaBankVerificationFlags | true,
     );
   } else {
     throw new ValidationError(`Receipt '${receipt}' is not recognized`);
