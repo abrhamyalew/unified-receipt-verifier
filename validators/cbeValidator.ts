@@ -1,12 +1,12 @@
 import config from "../config/verification.config.js";
 import { ValidationError } from "../utils/errorHandler.js";
 import { createRequire } from "module";
-import { cbeParsedData, cbeVerificationFlags } from "../types/validationType.js";
+import { cbePdfData, cbeVerificationFlags } from "../types/validationType.js";
 
 const require = createRequire(import.meta.url);
 const pdf = require("pdf-parse/lib/pdf-parse.js");
 
-export const cbeVerification = async (pdfResponse: cbeParsedData, defaultVerification: cbeVerificationFlags | true) => {
+export const cbeVerification = async (pdfResponse: cbePdfData, defaultVerification: cbeVerificationFlags | true) => {
 
   const buffer = await pdfResponse.arrayBuffer();
   const data = await pdf(Buffer.from(buffer));

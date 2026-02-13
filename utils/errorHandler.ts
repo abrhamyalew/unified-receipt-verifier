@@ -26,4 +26,16 @@ class ConnectionTimeOut extends AppError {
   }
 }
 
-export { AppError, ValidationError, NotFoundError, ConnectionTimeOut };
+class UpstreamServiceError extends AppError {
+  constructor(message = "Upstream service unavailable") {
+    super(message, 502);
+  }
+}
+
+export {
+  AppError,
+  ValidationError,
+  NotFoundError,
+  ConnectionTimeOut,
+  UpstreamServiceError,
+};

@@ -15,7 +15,7 @@ import type { Request, Response } from "express";
 import type { ReceiptData } from "../types/serviceTypes.js";
 import type { BatchVerifyRequestBody } from "../types/batchControllerType.js";
 import type {
-  cbeParsedData,
+  cbePdfData,
   boaParsedData,
   amharaBankParsedData,
   cbeVerificationFlags,
@@ -25,7 +25,7 @@ import type {
 } from "../types/validationType.js";
 import type { VerificationFlags } from "../types/verificationControllerTypes.js";
 
-const isCbeResponse = (data: ReceiptData): data is cbeParsedData =>
+const isCbeResponse = (data: ReceiptData): data is cbePdfData =>
   typeof data === "object" && data !== null && "arrayBuffer" in data;
 
 const isBoaResponse = (data: ReceiptData): data is boaParsedData =>
@@ -38,10 +38,10 @@ const verifySingleReceipt = async (
   receipt: string,
   defaultVerification: VerificationFlags,
 ): Promise<string | null> => {
-  if (!receipt) return null;
   if (typeof receipt !== "string") {
     throw new ValidationError("receipt must be a string");
   }
+  if (!receipt) return null;
 
   const trimedReceipt = receipt.trim();
   let ID: string | null = null;
