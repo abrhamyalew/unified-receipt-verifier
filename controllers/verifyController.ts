@@ -13,7 +13,7 @@ import { ValidationError } from "../utils/errorHandler.js";
 import type { Request, Response } from "express";
 import type { ReceiptData } from "../types/serviceTypes.js";
 import type {
-  cbeParsedData,
+  cbePdfData,
   boaParsedData,
   amharaBankParsedData,
   cbeVerificationFlags,
@@ -26,7 +26,7 @@ import type {
   VerifyRequestBody,
 } from "../types/verificationControllerTypes.js";
 
-const isCbeResponse = (data: ReceiptData): data is cbeParsedData =>
+const isCbeResponse = (data: ReceiptData): data is cbePdfData =>
   typeof data === "object" && data !== null && "arrayBuffer" in data;
 
 const isBoaResponse = (data: ReceiptData): data is boaParsedData =>

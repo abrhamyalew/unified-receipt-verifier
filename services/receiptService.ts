@@ -1,4 +1,8 @@
-import { ConnectionTimeOut, NotFoundError } from "../utils/errorHandler.js";
+import {
+  ConnectionTimeOut,
+  NotFoundError,
+  UpstreamServiceError,
+} from "../utils/errorHandler.js";
 import { Pool } from "undici";
 import type { boaParsedData } from "../types/validationType.js";
 import type {
@@ -43,6 +47,50 @@ const amharaBankPool = new Pool("https://transaction.amharabank.com.et", {
   headersTimeout: 15000,
   bodyTimeout: 15000,
 });
+
+const hasStatus = (error: unknown): error is { status: number } => {
+  if (typeof error !== "object" || error === null || !("status" in error)) {
+    return false;
+  }
+  return typeof (error as { status?: unknown }).status === "number";
+};
+
+const extractErrorCode = (error: unknown): string | undefined => {
+  if (typeof error !== "object" || error === null) {
+    return undefined;
+  }
+
+  if ("code" in error) {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === "string") {
+      return code;
+    }
+  }
+
+  if ("cause" in error) {
+    const cause = (error as { cause?: unknown }).cause;
+    if (typeof cause === "object" && cause !== null && "code" in cause) {
+      const causeCode = (cause as { code?: unknown }).code;
+      if (typeof causeCode === "string") {
+        return causeCode;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const isTimeoutCode = (code: string | undefined): boolean =>
+  code === "ETIMEDOUT" ||
+  code === "UND_ERR_CONNECT_TIMEOUT" ||
+  code === "UND_ERR_HEADERS_TIMEOUT" ||
+  code === "UND_ERR_BODY_TIMEOUT";
+
+const isConnectionResetCode = (code: string | undefined): boolean =>
+  code === "ECONNRESET" || code === "UND_ERR_SOCKET";
+
+const isUnavailableCode = (code: string | undefined): boolean =>
+  code === "ECONNREFUSED" || code === "ENOTFOUND" || code === "EAI_AGAIN";
 
 export const getReceiptData = async (
   receiptId: string,
@@ -155,13 +203,30 @@ export const getReceiptData = async (
       return parsedResponse.data;
     }
   } catch (error) {
-    if (typeof error === "object" && error !== null && "status" in error) {
-      const status = (error as { status?: number }).status;
-      if (status) {
-        throw error;
-      }
+    if (hasStatus(error)) {
+      throw error;
     }
-    const message = error instanceof Error ? error.message : String(error);
-    throw new ConnectionTimeOut(message);
+
+    const code = extractErrorCode(error);
+
+    if (isTimeoutCode(code)) {
+      throw new ConnectionTimeOut("Upstream receipt service timed out");
+    }
+
+    if (isConnectionResetCode(code)) {
+      throw new UpstreamServiceError(
+        "Upstream receipt service reset the connection",
+      );
+    }
+
+    if (isUnavailableCode(code)) {
+      throw new UpstreamServiceError("Upstream receipt service is unavailable");
+    }
+
+    throw new UpstreamServiceError(
+      code
+        ? `Upstream receipt service error (${code})`
+        : "Unexpected upstream receipt service error",
+    );
   }
 };

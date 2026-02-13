@@ -30,8 +30,8 @@ export type boaVerificationFlags = {
   accountNumber: boolean,
 }
 
-//cbe parsed data adn validation flag
-export type cbeParsedData = {
+//cbe raw pdf data and validation flag
+export type cbePdfData = {
   arrayBuffer: () => Promise<ArrayBuffer>;
 }
 
