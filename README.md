@@ -79,6 +79,25 @@ AB_EXPECTED_PAYMENT_YEAR=2026
 AB_EXPECTED_PAYMENT_MONTH=01
 ```
 
+## Docker
+
+Use Docker when you want reproducible deployment across machines (same Node version, same dependencies, same build output).
+
+### Build the image
+
+```bash
+docker build -t urv .
+```
+
+### Run the container
+
+```bash
+docker run -p 5000:5000 --env-file .env urv
+```
+
+- `-p 5000:5000` maps your host port `5000` to container port `5000`
+- `--env-file .env` injects expected verification values at runtime
+
 ## API Usage
 
 **POST** `http://localhost:5000/api/verify`
