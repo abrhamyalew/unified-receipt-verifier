@@ -17,8 +17,8 @@ const telebirrPool = new Pool("https://transactioninfo.ethiotelecom.et", {
   pipelining: 10, // HTTP/1.1 pipelining for faster requests
   keepAliveTimeout: 60000, // Keep connections alive for 60s
   keepAliveMaxTimeout: 600000, // Max keep-alive time
-  headersTimeout: 15000, // 10s timeout for receiving headers
-  bodyTimeout: 15000, // 10s timeout for receiving body
+  headersTimeout: 15000, // 15s timeout for receiving headers
+  bodyTimeout: 15000, // 15s timeout for receiving body
 });
 
 const cbePool = new Pool("https://apps.cbe.com.et:100", {

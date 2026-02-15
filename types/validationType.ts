@@ -18,7 +18,7 @@ export type amharaBankVerificationFlags = {
 //BOA parsed data, verififcation flag type
 export type boaParsedData = {
   "Transaction Date": string,
-  "Transferred Amount": number | number,
+  "Transferred Amount": number,
   "Receiver's Name": string,
   "Receiver's Account": string,
 }

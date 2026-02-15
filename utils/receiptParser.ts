@@ -4,10 +4,9 @@ export const telebirrParser = (input: string): string | null => {
   //case 1: if user puts full URL
   const trimInput = input.trim();
 
-  const id = trimInput.includes("https")
+  const id = trimInput.startsWith("https://")
     ? trimInput.split("/receipt/")[1]
-    : trimInput; 
-
+    : trimInput;
   if(!id) return null;
 
   //case 2: if they pasted the receipt code only
