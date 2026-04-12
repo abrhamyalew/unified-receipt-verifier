@@ -1,37 +1,59 @@
 import config from "../config/verification.config.js";
 import { ValidationError } from "../utils/errorHandler.js";
 import { createRequire } from "module";
-import { cbePdfData, cbeVerificationFlags } from "../types/validationType.js";
+import { cbePdfData, cbeMbParsedData, cbeVerificationFlags } from "../types/validationType.js";
 
 const require = createRequire(import.meta.url);
 const pdf = require("pdf-parse/lib/pdf-parse.js");
 
-export const cbeVerification = async (pdfResponse: cbePdfData, defaultVerification: cbeVerificationFlags | true) => {
+export const cbeVerification = async (pdfResponse: cbePdfData | cbeMbParsedData, defaultVerification: cbeVerificationFlags | true) => {
 
-  const buffer = await pdfResponse.arrayBuffer();
-  const data = await pdf(Buffer.from(buffer));
-  const text = data.text;
+  let parsedData: { amount: string | undefined, date: string | undefined, accountNumber: string | undefined, recipientName: string | undefined };
 
-  function extractField(text: string, regex: RegExp | string) {
-    const match = text.match(regex);
-    return match ? match[1].trim() : null;
+  if ('arrayBuffer' in pdfResponse) {
+    const buffer = await pdfResponse.arrayBuffer();
+    const data = await pdf(Buffer.from(buffer));
+    const text = data.text;
+
+    function extractField(text: string, regex: RegExp | string) {
+      const match = text.match(regex);
+      return match ? match[1].trim() : null;
+    }
+
+    parsedData = {
+      amount: extractField(text, /Transferred Amount\s*([\d.]+\s*ETB)/i)?.split(".",)[0] ?? "",
+
+      date: extractField(
+        text,
+        /Payment Date\s*&\s*Time\s*(\d{2}\/\d{2}\/\d{4})/i,
+      ) ?? undefined,
+
+      accountNumber: extractField(
+        text,
+        /Receiver[\s\S]*?Account\s*(1\*{4}\d{4})/i,
+      ) ?? undefined,
+
+      recipientName: extractField(text, /Receiver\s*([A-Z\s]+?)(?=\s*Account)/i) ?? undefined,
+    };
+  } else {
+    const dateStr = pdfResponse.dateTimes?.[0];
+    let formattedDate: string | undefined = undefined;
+    if (dateStr) {
+      const datePart = dateStr.split("T")[0];
+      if (datePart) {
+        const [year, month, day] = datePart.split("-");
+        if (month && day && year) {
+          formattedDate = `${month}/${day}/${year}`;
+        }
+      }
+    }
+    parsedData = {
+      amount: pdfResponse.debitAmount ? pdfResponse.debitAmount.split('.')[0] : "",
+      date: formattedDate,
+      accountNumber: pdfResponse.creditAccountNo,
+      recipientName: pdfResponse.creditAccountHolder,
+    };
   }
-
-  const parsedData = {
-    amount: extractField(text, /Transferred Amount\s*([\d.]+\s*ETB)/i)?.split(".",)[0] ?? "",
-
-    date: extractField(
-      text,
-      /Payment Date\s*&\s*Time\s*(\d{2}\/\d{2}\/\d{4})/i,
-    ),
-
-    accountNumber: extractField(
-      text,
-      /Receiver[\s\S]*?Account\s*(1\*{4}\d{4})/i,
-    ),
-
-    recipientName: extractField(text, /Receiver\s*([A-Z\s]+?)(?=\s*Account)/i),
-  };
 
   let verificationFlags: Partial<cbeVerificationFlags>;
 
@@ -47,6 +69,8 @@ export const cbeVerification = async (pdfResponse: cbePdfData, defaultVerificati
   }
 
   const expectedData = config.cbe.expectedData;
+
+
 
   const compareAmount = (expected: string | number, parsed: string | number ) => {
     const expectedNum = Number(expected);
@@ -117,7 +141,7 @@ export const cbeVerification = async (pdfResponse: cbePdfData, defaultVerificati
     const matches =
       key === "amount"
         ? compareAmount(expected, parsed)
-        : String(expected).trim() === String(parsed).trim();
+        : String(expected).trim().toLowerCase() === String(parsed).trim().toLowerCase();
 
     if (!matches) {
       throw new ValidationError(

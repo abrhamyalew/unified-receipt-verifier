@@ -22,11 +22,12 @@ import type {
   amharaBankVerificationFlags,
   boaVerificationFlags,
   telebirrVerificationFlags,
+  cbeMbParsedData,
 } from "../types/validationType.js";
 import type { VerificationFlags } from "../types/verificationControllerTypes.js";
 
-const isCbeResponse = (data: ReceiptData): data is cbePdfData =>
-  typeof data === "object" && data !== null && "arrayBuffer" in data;
+const isCbeResponse = (data: ReceiptData): data is cbePdfData | cbeMbParsedData =>
+  (typeof data === "object" && data !== null && "arrayBuffer" in data) || (typeof data === "object" && data !== null && ("creditAccountNo" in data && "debitAmount" in data));
 
 const isBoaResponse = (data: ReceiptData): data is boaParsedData =>
   typeof data === "object" && data !== null && "Transaction Date" in data;
@@ -68,7 +69,8 @@ const verifySingleReceipt = async (
   } else if (
     trimedReceipt.toLowerCase().includes("cbe") ||
     /^[A-Z0-9]{12}\d{8}$/.test(trimedReceipt) ||
-    /^[A-Z0-9]{12}&\d{8}$/.test(trimedReceipt)
+    /^[A-Z0-9]{12}&\d{8}$/.test(trimedReceipt) ||
+    /^[A-Z0-9]{12}-\d{8}$/.test(trimedReceipt)
   ) {
     // CBE
     ID = cbeParser(trimedReceipt);
