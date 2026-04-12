@@ -23,7 +23,7 @@ export const cbeParser = (input: string): string | null => {
 
     const link = new URL(trimInput);
 
-    if (link.searchParams.toString()) {
+    if (link.searchParams.toString() && link.searchParams.has("id")) {
       const url = link.searchParams.get("id");
 
       if(!url) return null;
@@ -35,7 +35,13 @@ export const cbeParser = (input: string): string | null => {
       return pattern.test(trimmedId) ? trimmedId : null;
 
     } else {
-      const trimInput = input.trim();
+      // support mbreciept
+      if (trimInput.includes("mbreciept.cbe.com.et") || trimInput.includes("mb.cbe.com.et/api/v1/transactions/public/transaction-detail/")) {
+         const id = trimInput.split("/").pop();
+         if (!id) return null;
+         const pattern = /^[A-Z0-9]{12}-\d{8}$/;
+         return pattern.test(id) ? id : null;
+      }
 
       const id = trimInput.includes("https")
         ? trimInput.split("/BranchReceipt/")[1]
@@ -43,16 +49,17 @@ export const cbeParser = (input: string): string | null => {
 
         if(!id) return null;
 
-      const pattern = /^[A-Z0-9]{12}&\d{8}$/;
-      return pattern.test(id) ? id : null;
+      const patternLegacy = /^[A-Z0-9]{12}&\d{8}$/;
+      return patternLegacy.test(id) ? id : null;
     }
   } catch (error) {
     const trimInput = input.trim();
 
     const queryPattern = /^[A-Z0-9]{12}\d{8}$/;
     const pathPattern = /^[A-Z0-9]{12}&\d{8}$/;
+    const mbPattern = /^[A-Z0-9]{12}-\d{8}$/;
 
-    if (queryPattern.test(trimInput) || pathPattern.test(trimInput)) {
+    if (queryPattern.test(trimInput) || pathPattern.test(trimInput) || mbPattern.test(trimInput)) {
       return trimInput;
     }
 

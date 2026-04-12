@@ -30,6 +30,15 @@ const cbePool = new Pool("https://apps.cbe.com.et:100", {
   bodyTimeout: 15000,
 });
 
+const cbeMbPool = new Pool("https://mb.cbe.com.et", {
+  connections: 50,
+  pipelining: 10,
+  keepAliveTimeout: 60000,
+  keepAliveMaxTimeout: 600000,
+  headersTimeout: 15000,
+  bodyTimeout: 15000,
+});
+
 const boaPool = new Pool("https://cs.bankofabyssinia.com", {
   connections: 50,
   pipelining: 10,
@@ -118,9 +127,35 @@ export const getReceiptData = async (
       return rawHTML;
     } else if (
       /^[A-Z0-9]{12}\d{8}$/.test(receiptId) ||
-      /^[A-Z0-9]{12}&\d{8}$/.test(receiptId)
+      /^[A-Z0-9]{12}&\d{8}$/.test(receiptId) ||
+      /^[A-Z0-9]{12}-\d{8}$/.test(receiptId)
     ) {
       // CBE
+      if (receiptId.includes("-")) {
+        const path = `/api/v1/transactions/public/transaction-detail/${receiptId}`;
+        const { statusCode, body } = await cbeMbPool.request({
+          path,
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "x-app-id": "d1292e42-7400-49de-a2d3-9731caa4c819",
+            "x-app-version": "0a01980b-9859-1369-8198-59f403820000",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          },
+        });
+
+        if (statusCode !== 200) {
+          throw new NotFoundError(
+            `Failed to fetch remote receipt. Status: ${statusCode}`,
+          );
+        }
+
+        const data = await body.json() as import("../types/validationType.js").cbeMbParsedData;
+        console.log(data.debitAmount)
+        return data; 
+      }
+
       let path: string;
       if (receiptId.includes("&")) {
         path = `/BranchReceipt/${receiptId}`;

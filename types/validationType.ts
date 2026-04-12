@@ -35,6 +35,16 @@ export type cbePdfData = {
   arrayBuffer: () => Promise<ArrayBuffer>;
 }
 
+export type cbeMbParsedData = {
+  id: string;
+  debitAmount: string;
+  amountDebited: string;
+  creditAccountNo: string;
+  creditAccountHolder: string;
+  dateTimes: string[];
+  [key: string]: any;
+}
+
 export type cbeVerificationFlags = {
   amount: boolean,
   date: boolean,

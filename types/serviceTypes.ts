@@ -2,6 +2,7 @@ import type {
   amharaBankParsedData,
   boaParsedData,
   cbePdfData,
+  cbeMbParsedData,
 } from "./validationType.js";
 
 export type Awaitable<T> = T | Promise<T>;
@@ -34,5 +35,6 @@ export type AmharaBankApiResponse = {
 export type ReceiptData =
   | string
   | cbePdfData
+  | cbeMbParsedData
   | boaParsedData
   | amharaBankParsedData;
