@@ -144,6 +144,23 @@ const batchVerify = async (req: Request, res: Response) => {
       throw new ValidationError("defaultVerification is required");
     }
 
+    if (defaultVerification !== true) {
+      if (typeof defaultVerification !== "object" || defaultVerification === null || Array.isArray(defaultVerification)) {
+        throw new ValidationError("defaultVerification must be the boolean true or a valid configuration object");
+      }
+      
+      const keys = Object.keys(defaultVerification);
+      if (keys.length === 0) {
+        throw new ValidationError("defaultVerification object cannot be empty (you cannot bypass all validations)");
+      }
+
+      for (const key of keys) {
+        if (typeof (defaultVerification as Record<string, unknown>)[key] !== "boolean") {
+          throw new ValidationError(`defaultVerification flag for '${key}' must be a boolean`);
+        }
+      }
+    }
+
     // Use parallel batch processor
     const results = await processBatch(receipt, (item) =>
       verifySingleReceipt(item, defaultVerification),
