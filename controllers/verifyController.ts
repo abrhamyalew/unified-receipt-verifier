@@ -54,9 +54,31 @@ const getTelebirrReceipt = async (req: Request, res: Response) => {
         throw new ValidationError("defaultVerification object cannot be empty (you cannot bypass all validations)");
       }
 
-      for (const key of keys) {
-        if (typeof (defaultVerification as Record<string, unknown>)[key] !== "boolean") {
-          throw new ValidationError(`defaultVerification flag for '${key}' must be a boolean`);
+      const ALLOWED_DEFAULT_VERIFICATION_KEYS = new Set([
+        "date",
+        "amount",
+        "recipientName",
+        "accountNumber",
+        "status",
+      ]);
+
+      if (defaultVerification !== true) {
+        if (typeof defaultVerification !== "object" || defaultVerification === null || Array.isArray(defaultVerification)) {
+          throw new ValidationError("defaultVerification must be the boolean true or a valid configuration object");
+        }
+        
+        const keys = Object.keys(defaultVerification);
+        if (keys.length === 0) {
+          throw new ValidationError("defaultVerification object cannot be empty (you cannot bypass all validations)");
+        }
+
+        for (const key of keys) {
+          if (!ALLOWED_DEFAULT_VERIFICATION_KEYS.has(key)) {
+            throw new ValidationError(`Unsupported defaultVerification flag '${key}'`);
+          }
+          if (typeof (defaultVerification as Record<string, unknown>)[key] !== "boolean") {
+            throw new ValidationError(`defaultVerification flag for '${key}' must be a boolean`);
+          }
         }
       }
     }
