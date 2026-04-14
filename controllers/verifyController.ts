@@ -38,10 +38,14 @@ const isAmharaResponse = (data: ReceiptData): data is amharaBankParsedData =>
 
 const getTelebirrReceipt = async (req: Request, res: Response) => {
   try {
-    const { receipt, defaultVerification } = req.body as VerifyRequestBody;
+    const { receipt, defaultVerification, proxy } = req.body as VerifyRequestBody;
 
     if (defaultVerification === undefined || receipt === undefined) {
       throw new ValidationError("defaultVerification or receipt missing");
+    }
+
+    if (proxy !== undefined && typeof proxy !== "boolean") {
+      throw new ValidationError("proxy must be a boolean when provided");
     }
 
     if (defaultVerification !== true) {
@@ -62,23 +66,12 @@ const getTelebirrReceipt = async (req: Request, res: Response) => {
         "status",
       ]);
 
-      if (defaultVerification !== true) {
-        if (typeof defaultVerification !== "object" || defaultVerification === null || Array.isArray(defaultVerification)) {
-          throw new ValidationError("defaultVerification must be the boolean true or a valid configuration object");
+      for (const key of keys) {
+        if (!ALLOWED_DEFAULT_VERIFICATION_KEYS.has(key)) {
+          throw new ValidationError(`Unsupported defaultVerification flag '${key}'`);
         }
-        
-        const keys = Object.keys(defaultVerification);
-        if (keys.length === 0) {
-          throw new ValidationError("defaultVerification object cannot be empty (you cannot bypass all validations)");
-        }
-
-        for (const key of keys) {
-          if (!ALLOWED_DEFAULT_VERIFICATION_KEYS.has(key)) {
-            throw new ValidationError(`Unsupported defaultVerification flag '${key}'`);
-          }
-          if (typeof (defaultVerification as Record<string, unknown>)[key] !== "boolean") {
-            throw new ValidationError(`defaultVerification flag for '${key}' must be a boolean`);
-          }
+        if (typeof (defaultVerification as Record<string, unknown>)[key] !== "boolean") {
+          throw new ValidationError(`defaultVerification flag for '${key}' must be a boolean`);
         }
       }
     }
@@ -100,7 +93,7 @@ const getTelebirrReceipt = async (req: Request, res: Response) => {
       if (!ID)
         return res.status(400).json({ error: "Invalid TeleBirr Receipt ID" });
 
-      const getRawReceiptData = await getReceiptData(ID);
+      const getRawReceiptData = await getReceiptData(ID, { proxy });
 
       if (!getRawReceiptData || typeof getRawReceiptData !== "string") {
         throw new ValidationError(`receipt '${receipt}' is NOT a valid receipt`);

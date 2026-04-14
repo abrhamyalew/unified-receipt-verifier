@@ -1,15 +1,20 @@
 import {
+  AppError,
   ConnectionTimeOut,
   NotFoundError,
   UpstreamServiceError,
 } from "../utils/errorHandler.js";
-import { Pool } from "undici";
+import { Pool, ProxyAgent, request } from "undici";
 import type { boaParsedData } from "../types/validationType.js";
 import type {
   AmharaBankApiResponse,
   BoaApiResponse,
   ReceiptData,
 } from "../types/serviceTypes.js";
+
+type ReceiptRequestOptions = {
+  proxy?: boolean;
+};
 
 // Create connection pools for each service with optimized settings
 const telebirrPool = new Pool("https://transactioninfo.ethiotelecom.et", {
@@ -20,6 +25,57 @@ const telebirrPool = new Pool("https://transactioninfo.ethiotelecom.et", {
   headersTimeout: 15000, // 15s timeout for receiving headers
   bodyTimeout: 15000, // 15s timeout for receiving body
 });
+
+const parseProxyEnvToUrl = (value: string): string => {
+  const trimmed = value.trim();
+  const parts = trimmed.split(":");
+  if (parts.length < 4) {
+    throw new AppError(
+      "Proxy requested but PROXY env is invalid (expected host:port:user:pass)",
+      500,
+    );
+  }
+
+  const host = parts[0];
+  const port = parts[1];
+  const username = parts[2];
+  const password = parts.slice(3).join(":");
+
+  if (!host || !port || !username || !password) {
+    throw new AppError(
+      "Proxy requested but PROXY env is invalid (expected host:port:user:pass)",
+      500,
+    );
+  }
+
+  const portNum = Number(port);
+  if (!Number.isInteger(portNum) || portNum <= 0 || portNum > 65535) {
+    throw new AppError(
+      "Proxy requested but PROXY env port is invalid",
+      500,
+    );
+  }
+
+  const encodedUser = encodeURIComponent(username);
+  const encodedPass = encodeURIComponent(password);
+  return `http://${encodedUser}:${encodedPass}@${host}:${portNum}`;
+};
+
+let telebirrProxyAgent: ProxyAgent | null = null;
+const getTelebirrProxyAgent = (): ProxyAgent => {
+  const raw = process.env.PROXY;
+  if (!raw) {
+    throw new AppError("Proxy requested but PROXY env is missing", 500);
+  }
+
+  if (telebirrProxyAgent) {
+    return telebirrProxyAgent;
+  }
+
+  const proxyUrl = parseProxyEnvToUrl(raw);
+  telebirrProxyAgent = new ProxyAgent(proxyUrl);
+  return telebirrProxyAgent;
+};
 
 const cbePool = new Pool("https://apps.cbe.com.et:100", {
   connections: 50,
@@ -103,19 +159,33 @@ const isUnavailableCode = (code: string | undefined): boolean =>
 
 export const getReceiptData = async (
   receiptId: string,
+  options?: ReceiptRequestOptions,
 ): Promise<ReceiptData | undefined> => {
   try {
     if (/^[A-Z0-9]{10}$/.test(receiptId)) {
       // Telebirr
       const path = `/receipt/${receiptId}`;
-      const { statusCode, body } = await telebirrPool.request({
-        path,
-        method: "GET",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-      });
+      const headers = {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      };
+
+      const useProxy = options?.proxy === true;
+      const response = useProxy
+        ? await request(`https://transactioninfo.ethiotelecom.et${path}`, {
+            method: "GET",
+            headers,
+            dispatcher: getTelebirrProxyAgent(),
+            headersTimeout: 15000,
+            bodyTimeout: 15000,
+          })
+        : await telebirrPool.request({
+            path,
+            method: "GET",
+            headers,
+          });
+
+      const { statusCode, body } = response;
 
       if (statusCode !== 200) {
         throw new NotFoundError(
@@ -151,9 +221,8 @@ export const getReceiptData = async (
           );
         }
 
-        const data = await body.json() as import("../types/validationType.js").cbeMbParsedData;
-        console.log(data.debitAmount)
-        return data; 
+        const data = (await body.json()) as import("../types/validationType.js").cbeMbParsedData;
+        return data;
       }
 
       let path: string;

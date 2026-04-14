@@ -3,6 +3,7 @@ import type { VerificationFlags } from "./verificationControllerTypes.js";
 export type BatchVerifyRequestBody = {
   receipt: string[];
   defaultVerification: VerificationFlags;
+  proxy?: boolean;
 };
 
 export type BatchVerifyFailedItem = {
