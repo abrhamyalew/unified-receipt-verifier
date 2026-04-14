@@ -15,4 +15,5 @@ export type VerificationFlags =
 export type VerifyRequestBody = {
   receipt: string;
   defaultVerification: VerificationFlags;
+  proxy?: boolean;
 };

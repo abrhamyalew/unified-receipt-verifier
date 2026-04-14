@@ -33,6 +33,8 @@ Create `.env` with your expected payment details:
 ### Telebirr Configuration
 
 ```env
+PROXY=proxy-host:proxy-port:proxy-username:proxy-password
+
 TELEBIRR_EXPECTED_AMOUNT=100
 TELEBIRR_EXPECTED_RECIPIENT_ACCOUNT=1000123456789
 TELEBIRR_EXPECTED_RECIPIENT_NAME=Abrham Yalew
@@ -42,6 +44,7 @@ TELEBIRR_EXPECTED_STATUS=Completed
 ```
 
 **Ensure that all expected data matches the receipt exactly in format and content.**
+**`PROXY` is only used when request body includes `"proxy": true` for Telebirr verification.**
 
 ### CBE Receipt Configuration
 
@@ -115,6 +118,16 @@ Supports both query-param based and path-based URLs, as well as standalone IDs.
 }
 ```
 
+**Option C: Telebirr With Proxy Enabled**
+
+```json
+{
+  "receipt": "CJP9OSP9WZ",
+  "defaultVerification": true,
+  "proxy": true
+}
+```
+
 **Option B: Using Full URL**
 
 ```json
@@ -141,6 +154,7 @@ Select specific fields to verify for any receipt type:
 ```
 
 _Note: `status` verification is skipped for CBE and BOA receipts as it's not explicitly present._
+_Note: `proxy` is Telebirr-only. If omitted or `false`, direct request mode is used._
 
 
 ## Batch Receipt Verification
@@ -154,10 +168,13 @@ Verify multiple Telebirr, CBE, and BOA receipts in a single request.
 
 ```json
 {
-  "receipt": ["FT24838X11PS82079", "FT25284X11PS79328"],
-  "defaultVerification": true
+  "receipt": ["CJP9OSP9WZ", "FT25284X11PS79328"],
+  "defaultVerification": true,
+  "proxy": true
 }
 ```
+
+_For batch requests, `proxy` must be a boolean when provided. Proxy is applied only for Telebirr items; other providers continue using direct mode._
 
 **Response:**
 

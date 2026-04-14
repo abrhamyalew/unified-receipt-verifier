@@ -38,6 +38,7 @@ const isAmharaResponse = (data: ReceiptData): data is amharaBankParsedData =>
 const verifySingleReceipt = async (
   receipt: string,
   defaultVerification: VerificationFlags,
+  proxy?: boolean,
 ): Promise<string | null> => {
   if (typeof receipt !== "string") {
     throw new ValidationError("receipt must be a string");
@@ -56,7 +57,7 @@ const verifySingleReceipt = async (
     ID = telebirrParser(trimedReceipt);
     if (!ID) throw new Error("Invalid TeleBirr Receipt ID");
 
-    const getRawReceiptData = await getReceiptData(ID);
+    const getRawReceiptData = await getReceiptData(ID, { proxy });
 
     if (!getRawReceiptData || typeof getRawReceiptData !== "string") {
       throw new ValidationError(`Receipt '${receipt}' is not recognized`);
@@ -134,7 +135,8 @@ const verifySingleReceipt = async (
 
 const batchVerify = async (req: Request, res: Response) => {
   try {
-    const { receipt, defaultVerification } = req.body as BatchVerifyRequestBody;
+    const { receipt, defaultVerification, proxy } =
+      req.body as BatchVerifyRequestBody;
 
     if (!Array.isArray(receipt)) {
       throw new ValidationError("receipt must be an array");
@@ -154,16 +156,31 @@ const batchVerify = async (req: Request, res: Response) => {
         throw new ValidationError("defaultVerification object cannot be empty (you cannot bypass all validations)");
       }
 
+      const ALLOWED_DEFAULT_VERIFICATION_KEYS = new Set([
+        "date",
+        "amount",
+        "recipientName",
+        "accountNumber",
+        "status",
+      ]);
+
       for (const key of keys) {
+        if (!ALLOWED_DEFAULT_VERIFICATION_KEYS.has(key)) {
+          throw new ValidationError(`Unsupported defaultVerification flag '${key}'`);
+        }
         if (typeof (defaultVerification as Record<string, unknown>)[key] !== "boolean") {
           throw new ValidationError(`defaultVerification flag for '${key}' must be a boolean`);
         }
       }
     }
 
+    if (proxy !== undefined && typeof proxy !== "boolean") {
+      throw new ValidationError("proxy must be a boolean when provided");
+    }
+
     // Use parallel batch processor
     const results = await processBatch(receipt, (item) =>
-      verifySingleReceipt(item, defaultVerification),
+      verifySingleReceipt(item, defaultVerification, proxy),
     );
 
     return res.status(200).json({
