@@ -73,7 +73,12 @@ const getTelebirrProxyAgent = (): ProxyAgent => {
   }
 
   const proxyUrl = parseProxyEnvToUrl(raw);
-  telebirrProxyAgent = new ProxyAgent(proxyUrl);
+  telebirrProxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    requestTls: {
+      rejectUnauthorized: false,
+    },
+  });
   return telebirrProxyAgent;
 };
 
